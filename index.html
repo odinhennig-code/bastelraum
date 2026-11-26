@@ -290,15 +290,15 @@ input.field::placeholder{color:rgba(255,255,255,.5)}
    ========================================================= */
 /* logo: Link oder Dateiname eines Sender-Logos (z. B. 'logos/brocken.png'). Leer = farbige Kachel. */
 const STATIONS = [
-  { name: '89.0 RTL', short: '89.0', logo: '', grad: 'linear-gradient(135deg,#FF4D6D,#C1124F)',
-    urls: ['https://stream.89.0rtl.de/live/mp3-256/', 'https://stream.89.0rtl.de/live/mp3-128/'] },
+  { name: '89.0 RTL', short: '89.0', logo: 'https://www.89.0rtl.de/assets/icons/icon-152x152.png', grad: 'linear-gradient(135deg,#FF4D6D,#C1124F)',
+    urls: ['https://stream.89.0rtl.de/live/mp3-256', 'https://stream.89.0rtl.de/live/mp3-256/'] },
   { name: 'Radio Beatly', short: 'BEAT', logo: '', grad: 'linear-gradient(135deg,#A66BFF,#5B2AD8)',
     urls: [] /* <- hier die Stream-Adresse von Radio Beatly eintragen */ },
-  { name: 'Radio Brocken', short: 'RB', logo: '', grad: 'linear-gradient(135deg,#43D18B,#14805A)', fav: true,
-    urls: ['https://fhhalle.streamabc.net/fhhal-rbhall-mp3-256-2800835', 'https://stream.radiobrocken.de/live/mp3-256/'] },
-  { name: 'Radio Sputnik', short: 'SPUT', logo: '', grad: 'linear-gradient(135deg,#4FC8FF,#1F5FD1)',
+  { name: 'Radio Brocken', short: 'RB', logo: 'https://www.radiobrocken.de/assets/icons/icon-152x152.png', grad: 'linear-gradient(135deg,#43D18B,#14805A)', fav: true,
+    urls: ['https://stream.radiobrocken.de/live/mp3-256', 'https://fhhalle.streamabc.net/fhhal-rbhall-mp3-256-2800835'] },
+  { name: 'Radio Sputnik', short: 'SPUT', logo: 'https://yt3.ggpht.com/-MKgxIKQIAOY/AAAAAAAAAAI/AAAAAAAAAAA/Qmoj6SQ1QIE/s288-mo-c-c0xffffffff-rj-k-no/photo.jpg', grad: 'linear-gradient(135deg,#4FC8FF,#1F5FD1)',
     urls: ['https://mdr-284330-0.sslcast.mdr.de/mdr/284330/0/mp3/high/stream.mp3', 'https://mdr-284330-1.sslcast.mdr.de/mdr/284330/1/mp3/high/stream.mp3'] },
-  { name: 'MDR Jump', short: 'JUMP', logo: '', grad: 'linear-gradient(135deg,#FFB547,#F05A1A)',
+  { name: 'MDR Jump', short: 'JUMP', logo: 'https://www.mdrjump.de/resources/jump/img/favicons/favicon-512x512.png', grad: 'linear-gradient(135deg,#FFB547,#F05A1A)',
     urls: ['https://mdr-284320-0.sslcast.mdr.de/mdr/284320/0/mp3/high/stream.mp3', 'https://mdr-284320-1.sslcast.mdr.de/mdr/284320/1/mp3/high/stream.mp3'] }
 ];
 const QUICK = ['Hilf mir tragen', 'Bring Kaffee mit', 'Paket abholen', 'Bin gleich fertig'];
@@ -550,7 +550,7 @@ $('rNext').onclick = () => { const i = (station + 1) % STATIONS.length; playing 
 
 function tile(st, size, font) {
   return st.logo
-    ? '<img src="' + esc(st.logo) + '" alt="" style="width:100%;height:100%;object-fit:contain;background:#fff;padding:' + Math.round(size * 0.1) + 'px">'
+    ? '<img src="' + esc(st.logo) + '" alt="" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{textContent:\'' + esc(st.short) + '\',style:\'font-size:' + font + 'px;font-weight:700\'}))">'
     : '<span style="font-size:' + font + 'px;font-weight:700">' + esc(st.short) + '</span>';
 }
 function renderRadio() {
