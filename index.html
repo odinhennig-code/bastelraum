@@ -67,6 +67,13 @@ header{display:flex;justify-content:space-between;align-items:flex-start}
 #dock button.on{background:rgba(255,255,255,.22)}
 .label{font-size:15px;color:rgba(255,255,255,.7)}
 input.field{flex:1;height:54px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);font-size:18px;padding:0 22px;outline:none;user-select:text}
+.seg{border:0;background:transparent;padding:10px 22px;border-radius:999px;font-size:16px;font-weight:500;color:rgba(255,255,255,.7);transition:background .25s,color .25s}
+.seg.on{background:rgba(255,255,255,.2);color:#fff}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 12px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);font-size:13px}
+.chip button{width:22px;height:22px;border-radius:50%;border:0;background:rgba(255,255,255,.12);font-size:12px;line-height:1}
+.pchip{padding:10px 18px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);font-size:15px}
+.pchip.on{background:linear-gradient(135deg,#FFC56B,#FF7A2F);color:#1A0E00;border-color:transparent;font-weight:600}
+input[type=number]::-webkit-inner-spin-button{display:none}
 input.field::placeholder{color:rgba(255,255,255,.5)}
 </style>
 </head>
@@ -200,18 +207,25 @@ input.field::placeholder{color:rgba(255,255,255,.5)}
 
     <!-- ================= MATERIAL ================= -->
     <div id="vMat" class="view hidden">
-      <section class="glass fade" style="height:100%;border-radius:34px;padding:26px 30px;display:flex;flex-direction:column;gap:16px">
+      <section class="glass fade" style="height:100%;border-radius:34px;padding:24px 30px;display:flex;flex-direction:column;gap:16px">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:22px;font-weight:600">Material</span>
+          <div style="display:flex;background:rgba(0,0,0,.25);border-radius:999px;padding:4px">
+            <button class="seg on" data-tab="lager">Material</button>
+            <button class="seg" data-tab="proj">Projekte</button>
+          </div>
           <span id="matInfo" class="muted" style="font-size:15px"></span>
         </div>
-        <div id="matList" style="flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:10px"></div>
-        <div style="display:flex;gap:10px">
+        <div id="matList" style="flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:12px;padding:2px"></div>
+        <div id="barLager" style="display:flex;gap:10px">
           <input id="matInput" class="field" placeholder="Neues Material, z. B. Holzleim" autocomplete="off">
-          <button class="gb mic" data-mic="matInput" aria-label="Spracheingabe" style="width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
-          </button>
+          <button class="gb mic" data-mic="matInput" aria-label="Spracheingabe" style="width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+          <input id="matPrice" class="field" type="text" inputmode="decimal" placeholder="Preis €" style="flex:none;width:130px">
           <button id="matAdd" class="accent pill" style="padding:0 26px;height:54px;font-size:16px">Hinzufügen</button>
+        </div>
+        <div id="barProj" class="hidden" style="display:flex;gap:10px">
+          <input id="projInput" class="field" placeholder="Neues Projekt, z. B. Sternenbaum" autocomplete="off">
+          <button class="gb mic" data-mic="projInput" aria-label="Spracheingabe" style="width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+          <button id="projAdd" class="accent pill" style="padding:0 26px;height:54px;font-size:16px">Projekt anlegen</button>
         </div>
       </section>
     </div>
@@ -222,6 +236,10 @@ input.field::placeholder{color:rgba(255,255,255,.5)}
       <button data-view="radio" class="nav" aria-label="Radio"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
       <button data-view="night" class="nav" aria-label="Nachtmodus"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
     </nav>
+  </div>
+
+  <div id="sheet" class="hidden" style="position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center">
+    <div id="sheetBox" class="glass fade" style="width:620px;border-radius:34px;padding:28px 30px;display:flex;flex-direction:column;gap:18px;background:rgba(30,32,44,.75)"></div>
   </div>
 
   <div id="toast" class="glass hidden" style="position:absolute;top:28px;left:50%;margin-left:-200px;width:400px;text-align:center;padding:14px 20px;border-radius:999px;font-size:16px;background:rgba(30,30,40,.55)"></div>
@@ -564,58 +582,150 @@ function renderRadio() {
 }
 
 /* =========================================================
-   MATERIAL
+   MATERIAL & PROJEKTE
    ========================================================= */
-let mats = store.get('materials', []);
-function saveMats() { store.set('materials', mats); renderMats(); }
+let mats = store.get('materials', []).map((m) => ({ price: 0, ...m }));
+let projects = store.get('projects', []);
+let allocs = store.get('allocs', []);
+let matTab = 'lager';
+const eur = (n) => (Math.round(n * 100) / 100).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+const usedOf = (m) => allocs.filter((a) => a.matId === m.id).reduce((s, a) => s + a.qty, 0);
+const matById = (id) => mats.find((m) => m.id === id);
+const projById = (id) => projects.find((p) => p.id === id);
+function saveAll() { store.set('materials', mats); store.set('projects', projects); store.set('allocs', allocs); renderMats(); }
+
+document.querySelectorAll('.seg').forEach((b) => b.onclick = () => {
+  matTab = b.dataset.tab; sndTap();
+  document.querySelectorAll('.seg').forEach((x) => x.classList.toggle('on', x === b));
+  $('barLager').classList.toggle('hidden', matTab !== 'lager');
+  $('barProj').classList.toggle('hidden', matTab !== 'proj');
+  renderMats();
+});
+
 $('matAdd').onclick = addMat;
 $('matInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addMat(); });
 function addMat() {
   const t = $('matInput').value.trim(); if (!t) { say('Bitte erst einen Namen eingeben'); return; }
-  mats.push({ id: Date.now(), name: t, qty: 1 }); $('matInput').value = ''; sndTap(); saveMats();
+  const price = parseFloat(String($('matPrice').value).replace(',', '.')) || 0;
+  mats.push({ id: Date.now(), name: t, qty: 1, price }); $('matInput').value = ''; $('matPrice').value = ''; sndTap(); saveAll();
 }
+$('projAdd').onclick = addProj;
+$('projInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addProj(); });
+function addProj(name) {
+  const t = (typeof name === 'string' ? name : $('projInput').value).trim(); if (!t) { say('Bitte erst einen Projektnamen eingeben'); return null; }
+  const p = { id: Date.now(), name: t }; projects.push(p); $('projInput').value = ''; sndTap(); saveAll(); return p;
+}
+
+const xIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+function empty(t1, t2) { return '<div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:10px;padding:70px 0;color:rgba(255,255,255,.55)"><span style="font-size:18px">' + t1 + '</span><span style="font-size:14px">' + t2 + '</span></div>'; }
+
 function renderMats() {
   const l = $('matList'); l.innerHTML = '';
-  const low = mats.filter((m) => m.qty <= 1).length;
-  $('matInfo').textContent = mats.length ? mats.length + ' Sorten' + (low ? ' · ' + low + ' fast leer' : '') : '';
-  if (!mats.length) {
-    l.innerHTML = '<div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:60px 0;color:rgba(255,255,255,.55)"><span style="font-size:18px">Noch kein Material eingetragen</span><span style="font-size:14px">Unten eintippen oder aufs Mikrofon drücken</span></div>';
-    return;
+  if (matTab === 'lager') {
+    const low = mats.filter((m) => m.qty - usedOf(m) <= 0).length;
+    $('matInfo').textContent = mats.length ? mats.length + ' Sorten' + (low ? ' · ' + low + ' nichts mehr frei' : '') : '';
+    if (!mats.length) { l.innerHTML = empty('Noch kein Material eingetragen', 'Unten Name und Preis eintippen oder aufs Mikrofon drücken'); return; }
+    mats.forEach((m, i) => {
+      const used = usedOf(m), free = m.qty - used;
+      const row = document.createElement('div'); row.className = 'fade';
+      row.style.cssText = 'animation-delay:' + (i * 0.04) + 's;display:flex;flex-direction:column;gap:10px;padding:14px 14px 14px 18px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid ' + (free <= 0 ? 'rgba(255,110,80,.5)' : 'rgba(255,255,255,.12)');
+      const chips = allocs.filter((a) => a.matId === m.id).map((a) => { const p = projById(a.projId); return p ? '<span class="chip">' + esc(p.name) + ' ×' + a.qty + '<button data-free="' + a.id + '" aria-label="Freigeben">✕</button></span>' : ''; }).join('');
+      row.innerHTML = '<div style="display:flex;align-items:center;gap:10px">'
+        + '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:18px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(m.name) + '</span>'
+        + '<span style="font-size:13px;color:' + (free <= 0 ? '#FF9A80' : 'rgba(255,255,255,.6)') + '">' + (free <= 0 ? 'Nichts mehr frei' : free + ' frei') + (used ? ' · ' + used + ' vergeben' : '') + (m.price ? ' · ' + eur(m.price) + ' / Stück' : '') + '</span></div>'
+        + '<button class="gb" data-a="minus" aria-label="Weniger" style="width:40px;height:40px;border-radius:50%;font-size:20px">−</button>'
+        + '<span class="num" style="min-width:28px;text-align:center;font-size:20px;font-weight:600">' + m.qty + '</span>'
+        + '<button class="gb" data-a="plus" aria-label="Mehr" style="width:40px;height:40px;border-radius:50%;font-size:20px">+</button>'
+        + '<button data-a="del" aria-label="Löschen" style="width:36px;height:36px;border-radius:50%;border:0;background:transparent;display:flex;align-items:center;justify-content:center">' + xIcon + '</button></div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">' + chips
+        + '<button data-a="give" class="gb pill" style="padding:6px 14px;font-size:13px">+ Für Projekt vergeben</button></div>';
+      row.querySelector('[data-a=minus]').onclick = () => { if (m.qty - 1 < used) { say('Erst bei einem Projekt freigeben'); return; } m.qty = Math.max(0, m.qty - 1); saveAll(); };
+      row.querySelector('[data-a=plus]').onclick = () => { m.qty++; saveAll(); };
+      row.querySelector('[data-a=del]').onclick = () => { mats = mats.filter((x) => x !== m); allocs = allocs.filter((a) => a.matId !== m.id); sndTap(); saveAll(); };
+      row.querySelector('[data-a=give]').onclick = () => openGive(m);
+      row.querySelectorAll('[data-free]').forEach((b) => b.onclick = () => { allocs = allocs.filter((a) => a.id !== +b.dataset.free); sndTap(); saveAll(); });
+      l.appendChild(row);
+    });
+  } else {
+    const total = allocs.reduce((s, a) => { const m = matById(a.matId); return s + (m ? m.price * a.qty : 0); }, 0);
+    $('matInfo').textContent = projects.length ? projects.length + (projects.length === 1 ? ' Projekt' : ' Projekte') + ' · zusammen ' + eur(total) : '';
+    if (!projects.length) { l.innerHTML = empty('Noch keine Projekte', 'Unten einen Namen eintippen, z. B. Sternenbaum'); return; }
+    projects.forEach((p, i) => {
+      const list = allocs.filter((a) => a.projId === p.id);
+      const sum = list.reduce((s, a) => { const m = matById(a.matId); return s + (m ? m.price * a.qty : 0); }, 0);
+      const card = document.createElement('div'); card.className = 'fade';
+      card.style.cssText = 'animation-delay:' + (i * 0.05) + 's;display:flex;flex-direction:column;gap:10px;padding:18px 18px 16px 20px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)';
+      const rows = list.map((a) => { const m = matById(a.matId); if (!m) return ''; return '<div style="display:flex;align-items:center;gap:10px;font-size:15px"><span style="flex:1">' + esc(m.name) + ' <span class="muted">×' + a.qty + '</span></span><span class="num">' + eur(m.price * a.qty) + '</span><button data-free="' + a.id + '" aria-label="Freigeben" style="width:28px;height:28px;border-radius:50%;border:0;background:rgba(255,255,255,.08);font-size:12px">✕</button></div>'; }).join('');
+      card.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><span style="flex:1;font-size:19px;font-weight:600">' + esc(p.name) + '</span>'
+        + '<span class="num" style="font-size:19px;font-weight:600;color:#FFC56B">' + eur(sum) + '</span>'
+        + '<button data-a="del" aria-label="Projekt löschen" style="width:36px;height:36px;border-radius:50%;border:0;background:transparent;display:flex;align-items:center;justify-content:center">' + xIcon + '</button></div>'
+        + (rows || '<span class="muted" style="font-size:14px">Noch kein Material vergeben</span>')
+        + '<button data-a="add" class="gb pill" style="align-self:flex-start;padding:6px 14px;font-size:13px">+ Material hinzufügen</button>';
+      card.querySelector('[data-a=del]').onclick = () => { projects = projects.filter((x) => x !== p); allocs = allocs.filter((a) => a.projId !== p.id); sndTap(); saveAll(); };
+      card.querySelector('[data-a=add]').onclick = () => openPickMat(p);
+      card.querySelectorAll('[data-free]').forEach((b) => b.onclick = () => { allocs = allocs.filter((a) => a.id !== +b.dataset.free); sndTap(); saveAll(); });
+      l.appendChild(card);
+    });
   }
-  mats.forEach((m, i) => {
-    const row = document.createElement('div');
-    row.className = 'fade';
-    row.style.cssText = 'animation-delay:' + (i * 0.04) + 's;display:flex;align-items:center;gap:12px;padding:12px 14px 12px 18px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid ' + (m.qty === 0 ? 'rgba(255,110,80,.5)' : 'rgba(255,255,255,.12)');
-    const status = m.qty === 0 ? 'Leer' : m.qty === 1 ? 'Fast leer' : '';
-    row.innerHTML = '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:18px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(m.name) + '</span>'
-      + (status ? '<span style="font-size:12px;color:#FF9A80">' + status + '</span>' : '') + '</div>'
-      + '<button class="gb" data-a="minus" aria-label="Weniger" style="width:44px;height:44px;border-radius:50%;font-size:22px">−</button>'
-      + '<span class="num" style="min-width:34px;text-align:center;font-size:22px;font-weight:600">' + m.qty + '</span>'
-      + '<button class="gb" data-a="plus" aria-label="Mehr" style="width:44px;height:44px;border-radius:50%;font-size:22px">+</button>'
-      + '<button data-a="del" aria-label="Löschen" style="width:40px;height:40px;border-radius:50%;border:0;background:transparent;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
-    row.querySelector('[data-a=minus]').onclick = () => { m.qty = Math.max(0, m.qty - 1); saveMats(); };
-    row.querySelector('[data-a=plus]').onclick = () => { m.qty++; saveMats(); };
-    row.querySelector('[data-a=del]').onclick = () => { mats = mats.filter((x) => x !== m); sndTap(); saveMats(); };
-    l.appendChild(row);
-  });
+}
+
+/* ---- Fenster: Material für ein Projekt vergeben ---- */
+function closeSheet() { $('sheet').classList.add('hidden'); }
+$('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') closeSheet(); });
+function openGive(m, presetProj) {
+  const free = m.qty - usedOf(m);
+  if (free <= 0) { say('Von ' + m.name + ' ist nichts mehr frei'); return; }
+  let sel = presetProj ? presetProj.id : (projects[0] ? projects[0].id : null), n = 1;
+  const box = $('sheetBox');
+  const draw = () => {
+    box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:24px;font-weight:600">' + esc(m.name) + ' vergeben</span><span class="muted" style="font-size:15px">' + free + ' frei</span></div>'
+      + '<span class="label">Für welches Projekt?</span>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:8px">' + projects.map((p) => '<button class="pchip' + (p.id === sel ? ' on' : '') + '" data-p="' + p.id + '">' + esc(p.name) + '</button>').join('') + '</div>'
+      + '<div style="display:flex;gap:10px"><input id="sheetProj" class="field" placeholder="Neues Projekt …" autocomplete="off"><button class="gb mic" data-mic="sheetProj" aria-label="Spracheingabe" style="width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none">' + '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>' + '</button><button id="sheetNew" class="gb pill" style="padding:0 20px;height:54px;font-size:15px">Anlegen</button></div>'
+      + '<div style="display:flex;align-items:center;justify-content:center;gap:18px"><button id="sMinus" class="gb" style="width:56px;height:56px;border-radius:50%;font-size:26px">−</button><span class="num" style="font-size:40px;font-weight:600;min-width:60px;text-align:center">' + n + '</span><button id="sPlus" class="gb" style="width:56px;height:56px;border-radius:50%;font-size:26px">+</button></div>'
+      + (m.price ? '<span class="muted" style="text-align:center;font-size:15px">Kosten: ' + eur(m.price * n) + '</span>' : '')
+      + '<div style="display:flex;gap:10px"><button id="sCancel" class="gb pill" style="flex:1;height:54px;font-size:16px">Abbrechen</button><button id="sOk" class="accent pill" style="flex:1.4;height:54px;font-size:17px">Vergeben</button></div>';
+    box.querySelectorAll('[data-p]').forEach((b) => b.onclick = () => { sel = +b.dataset.p; draw(); });
+    $('sMinus').onclick = () => { n = Math.max(1, n - 1); draw(); };
+    $('sPlus').onclick = () => { if (n < free) { n++; draw(); } else say('Mehr ist nicht frei'); };
+    $('sheetNew').onclick = () => { const p = addProj($('sheetProj').value); if (p) { sel = p.id; draw(); } };
+    $('sCancel').onclick = closeSheet;
+    $('sOk').onclick = () => {
+      if (!sel) { say('Bitte erst ein Projekt wählen oder anlegen'); return; }
+      const ex = allocs.find((a) => a.matId === m.id && a.projId === sel);
+      if (ex) ex.qty += n; else allocs.push({ id: Date.now(), matId: m.id, projId: sel, qty: n });
+      sndSend(); closeSheet(); say(m.name + ' ×' + n + ' → ' + projById(sel).name); saveAll();
+    };
+  };
+  draw(); $('sheet').classList.remove('hidden');
+}
+function openPickMat(p) {
+  const box = $('sheetBox');
+  const avail = mats.filter((m) => m.qty - usedOf(m) > 0);
+  box.innerHTML = '<span style="font-size:24px;font-weight:600">Material für ' + esc(p.name) + '</span>'
+    + (avail.length ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + avail.map((m) => '<button class="pchip" data-m="' + m.id + '">' + esc(m.name) + ' <span style="opacity:.6">(' + (m.qty - usedOf(m)) + ' frei)</span></button>').join('') + '</div>'
+      : '<span class="muted">Kein freies Material. Trag es zuerst unter „Material“ ein.</span>')
+    + '<button id="sCancel" class="gb pill" style="height:54px;font-size:16px">Abbrechen</button>';
+  box.querySelectorAll('[data-m]').forEach((b) => b.onclick = () => openGive(matById(+b.dataset.m), p));
+  $('sCancel').onclick = closeSheet;
+  $('sheet').classList.remove('hidden');
 }
 
 /* =========================================================
    SPRACHEINGABE (für jedes Textfeld mit Mikrofon-Knopf)
    ========================================================= */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-document.querySelectorAll('[data-mic]').forEach((btn) => {
-  btn.onclick = () => {
-    if (!SR) { say('Spracheingabe geht in diesem Browser nicht – bitte Chrome nutzen'); return; }
-    if (btn.rec) { btn.rec.stop(); return; }
-    const input = $(btn.dataset.mic);
-    const rec = new SR(); rec.lang = 'de-DE'; rec.interimResults = true; rec.maxAlternatives = 1;
-    btn.rec = rec; btn.classList.add('on'); sndTap();
-    rec.onresult = (e) => { let t = ''; for (const r of e.results) t += r[0].transcript; input.value = t.charAt(0).toUpperCase() + t.slice(1); };
-    rec.onerror = (e) => { if (e.error === 'not-allowed') say('Bitte das Mikrofon erlauben'); };
-    rec.onend = () => { btn.rec = null; btn.classList.remove('on'); };
-    rec.start();
-  };
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('[data-mic]'); if (!btn) return;
+  if (!SR) { say('Spracheingabe geht in diesem Browser nicht – bitte Chrome nutzen'); return; }
+  if (btn.rec) { btn.rec.stop(); return; }
+  const input = $(btn.dataset.mic);
+  const rec = new SR(); rec.lang = 'de-DE'; rec.interimResults = true; rec.maxAlternatives = 1;
+  btn.rec = rec; btn.classList.add('on'); sndTap();
+  rec.onresult = (e) => { let t = ''; for (const r of e.results) t += r[0].transcript; input.value = t.charAt(0).toUpperCase() + t.slice(1); };
+  rec.onerror = (e) => { if (e.error === 'not-allowed') say('Bitte das Mikrofon erlauben'); };
+  rec.onend = () => { btn.rec = null; btn.classList.remove('on'); };
+  rec.start();
 });
 
 /* =========================================================
