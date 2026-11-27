@@ -645,7 +645,14 @@ function tile(st, size, font) {
     ? '<img src="' + esc(st.logo) + '" alt="" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:' + (st.fit || 'cover') + ';padding:' + (st.fit ? Math.round(size * 0.14) : 0) + 'px" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{textContent:\'' + esc(st.short) + '\',style:\'font-size:' + font + 'px;font-weight:700\'}))">'
     : '<span style="font-size:' + font + 'px;font-weight:700">' + esc(st.short) + '</span>';
 }
+let audioBusy = null;
+function reportAudio() {
+  const busy = playing || timers.some((t) => left(t) <= 0);
+  if (busy === audioBusy) return; audioBusy = busy;
+  try { if (window.BastelOS && BastelOS.setRadio) BastelOS.setRadio(busy); } catch (e) {}
+}
 function renderRadio() {
+  reportAudio();
   const st = STATIONS[station];
   $('player').classList.toggle('playing', playing);
   $('glow').style.background = st.grad; $('art').style.background = st.grad;
@@ -846,7 +853,6 @@ function luigiOpen() {
   $('lShade').classList.remove('hidden'); $('lGlow').classList.add('on'); $('luigi').classList.add('away');
   $('lSay').classList.add('hidden'); $('lHeard').textContent = 'Ich höre …';
   const o = $('lPanel'); o.classList.add('open', 'listen'); o.classList.remove('think');
-  tone([[880, 0, 0.15], [1320, 0.08, 0.25]], 'sine', 0.12);
 }
 function luigiListen() {
   luigiOpen();
@@ -877,7 +883,6 @@ function luigiReply(t) {
   const o = $('lPanel'); o.classList.remove('think', 'listen');
   const b = $('lSay'); b.textContent = t; b.classList.remove('hidden');
   b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
-  speak(t);
   clearTimeout(L.closeT); L.closeT = setTimeout(luigiClose, 5200);
 }
 function luigiClose() {
@@ -1044,7 +1049,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.6.2';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -1168,6 +1173,7 @@ setInterval(() => {
   tick();
   beat++;
   const anyDone = timers.some((t) => left(t) <= 0);
+  reportAudio();
   if (anyDone && beat % 4 === 0) { sndAlarm(); if (view.startsWith('night')) show('home'); }
 }, 500);
 

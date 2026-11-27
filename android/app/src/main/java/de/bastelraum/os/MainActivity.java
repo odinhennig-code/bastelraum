@@ -44,7 +44,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final String URL = "https://odinhennig-code.github.io/bastelraum/";
-    private static final String VERSION = "1.3";
+    private static final String VERSION = "1.4";
 
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -427,6 +427,9 @@ public class MainActivity extends Activity {
                 else { ui.removeCallbacks(wakeRunner); if ("wake".equals(mode) && speech != null) { speech.cancel(); mode = "idle"; } }
             } });
         }
+        @JavascriptInterface public void setRadio(final boolean on) {
+            ui.post(new Runnable() { @Override public void run() { radioOn = on; if (on) unmuteBeeps(); } });
+        }
         @JavascriptInterface public void setMotionWatch(final boolean on) {
             ui.post(new Runnable() { @Override public void run() { motionWanted = on; if (motion != null) motion.setEnabled(on); } });
         }
@@ -457,7 +460,6 @@ public class MainActivity extends Activity {
                     String hit = null;
                     if (m != null) for (String cand : m) { String rest = afterWakeWord(cand); if (rest != null) { hit = rest; break; } }
                     if (hit != null) {
-                        unmuteBeeps();
                         js("window.onWakeWord && window.onWakeWord(" + q(hit) + ")");
                     } else {
                         restartWake(150);
@@ -491,7 +493,7 @@ public class MainActivity extends Activity {
             @Override public void onReadyForSpeech(Bundle p) {}
             @Override public void onBeginningOfSpeech() {}
             @Override public void onBufferReceived(byte[] b) {}
-            @Override public void onEndOfSpeech() {}
+            @Override public void onEndOfSpeech() { muteFor(1200); }
             @Override public void onEvent(int t, Bundle p) {}
         });
     }
@@ -546,26 +548,36 @@ public class MainActivity extends Activity {
         ui.removeCallbacks(wakeRunner);
         ensureRecognizer();
         try { speech.cancel(); } catch (Exception ignored) {}
-        unmuteBeeps();
+        muteBeeps();
         mode = "cmd";
         speech.startListening(recIntent(true));
     }
 
-    /* Der Erkennungs-Piep beim Dauerzuhören soll nicht nerven */
+    /* Die Erkennungs-Pieptöne stummschalten: kurz um Start und Ende der Erkennung herum.
+       Läuft das Radio, wird nichts stumm geschaltet (dann geht der Piep im Radio unter). */
+    private boolean radioOn = false;
     private boolean muted = false;
-    private void muteBeeps() {
-        if (muted || Build.VERSION.SDK_INT < 23) return;
-        try {
-            AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-            am.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_MUTE, 0);
-            am.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0);
-            muted = true;
-        } catch (Exception ignored) {}
+    private final Runnable unmuteRunner = new Runnable() { @Override public void run() { unmuteBeeps(); } };
+    private void muteBeeps() { muteFor(900); }
+    private void muteFor(long ms) {
+        ui.removeCallbacks(unmuteRunner);
+        if (!radioOn && !muted && Build.VERSION.SDK_INT >= 23) {
+            try {
+                AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0);
+                am.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_MUTE, 0);
+                am.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0);
+                muted = true;
+            } catch (Exception ignored) {}
+        }
+        ui.postDelayed(unmuteRunner, ms);
     }
     private void unmuteBeeps() {
+        ui.removeCallbacks(unmuteRunner);
         if (!muted || Build.VERSION.SDK_INT < 23) return;
         try {
             AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0);
             am.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_UNMUTE, 0);
             am.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0);
         } catch (Exception ignored) {}
