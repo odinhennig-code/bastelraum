@@ -5,10 +5,12 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,14 +19,8 @@ import android.provider.Settings;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
-import android.text.Layout;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.BackgroundColorSpan;
-import android.text.style.ForegroundColorSpan;
-import android.view.Gravity;
+import android.speech.tts.TextToSpeech;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.GeolocationPermissions;
@@ -37,57 +33,59 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class MainActivity extends Activity {
 
     private static final String URL = "https://odinhennig-code.github.io/bastelraum/";
-    private static final String VERSION = "1.1";
+    private static final String VERSION = "1.2";
 
     private WebView web;
-    private FrameLayout recovery;
-    private TextView recText;
     private final Handler ui = new Handler(Looper.getMainLooper());
+    private boolean pageFailed = false;
 
-    /* ---------- Notfall-Menü ---------- */
+    /* ================= Recovery ================= */
     private static final String[] ITEMS = {
             "Zurück zum Dashboard",
             "Dashboard neu laden",
             "Nach Updates suchen",
             "Android-Einstellungen öffnen",
-            "App beenden → normales Android",
+            "App beenden (normales Android)",
             "Bildschirm ausschalten",
             "Tablet neu starten"
     };
+    private static final int SEL_BG = Color.parseColor("#FF8F00");
+    private static final int ITEM_FG = Color.parseColor("#E6E6E6");
+    private static final int HEAD_FG = Color.parseColor("#9E9E9E");
+
+    private LinearLayout recovery;
+    private final TextView[] itemViews = new TextView[ITEMS.length];
+    private TextView recLog;
     private int sel = 0;
     private boolean recOpen = false;
-    private boolean bootDone = false;
-    private int bootLines = 0;
-    private boolean cursorOn = true;
-    private String statusLine = "";
     private final ArrayList<Long> upPresses = new ArrayList<>();
     private boolean longFired = false;
     private final Runnable longPress = new Runnable() {
         @Override public void run() { longFired = true; confirm(); }
     };
-    private final Runnable blink = new Runnable() {
-        @Override public void run() {
-            cursorOn = !cursorOn;
-            if (recOpen) { draw(); ui.postDelayed(this, 500); }
-        }
-    };
 
-    /* ---------- Spracheingabe ---------- */
+    /* ================= Sprache ================= */
     private SpeechRecognizer speech;
+    private String mode = "idle";          // idle | wake | cmd
     private String speechTarget = "";
+    private boolean wakeEnabled = false;
+    private long lastRms = 0;
+    private TextToSpeech tts;
+    private boolean ttsReady = false;
+    private final Runnable wakeRunner = new Runnable() { @Override public void run() { startWake(); } };
 
-    private boolean pageFailed = false;
-
-    @SuppressLint({"SetJavaScriptEnabled", "ClickableViewAccessibility"})
+    @SuppressLint({"SetJavaScriptEnabled"})
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -131,34 +129,18 @@ public class MainActivity extends Activity {
         });
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
 
-        recovery = new FrameLayout(this);
-        recovery.setBackgroundColor(Color.BLACK);
-        recovery.setVisibility(View.GONE);
-        recText = new TextView(this);
-        recText.setTypeface(Typeface.MONOSPACE);
-        recText.setTextColor(Color.parseColor("#39FF7A"));
-        recText.setTextSize(20);
-        recText.setLineSpacing(0, 1.25f);
-        recText.setPadding(70, 50, 70, 50);
-        recText.setGravity(Gravity.TOP | Gravity.START);
-        recText.setOnTouchListener(new View.OnTouchListener() {
-            @Override public boolean onTouch(View v, MotionEvent e) {
-                if (e.getAction() != MotionEvent.ACTION_UP || !bootDone) return true;
-                Layout l = recText.getLayout();
-                if (l == null) return true;
-                int line = l.getLineForVertical((int) e.getY() - recText.getTotalPaddingTop());
-                int idx = line - MENU_START;
-                if (idx >= 0 && idx < ITEMS.length) {
-                    if (idx == sel) confirm(); else { sel = idx; draw(); }
-                }
-                return true;
-            }
-        });
-        recovery.addView(recText, new FrameLayout.LayoutParams(-1, -1));
+        buildRecovery();
         root.addView(recovery, new FrameLayout.LayoutParams(-1, -1));
 
         setContentView(root);
         askPermissions();
+
+        tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override public void onInit(int st) {
+                if (st == TextToSpeech.SUCCESS) { tts.setLanguage(Locale.GERMANY); ttsReady = true; }
+            }
+        });
+
         web.loadUrl(URL);
     }
 
@@ -172,7 +154,12 @@ public class MainActivity extends Activity {
         }
     }
 
-    /* ---------- Vollbild, Android ausblenden ---------- */
+    @Override
+    public void onRequestPermissionsResult(int code, String[] perms, int[] res) {
+        if (wakeEnabled) restartWake(500);
+    }
+
+    /* ---------- Vollbild ---------- */
     private void hideSystemUi() {
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -183,10 +170,22 @@ public class MainActivity extends Activity {
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
     }
 
-    @Override protected void onResume() { super.onResume(); hideSystemUi(); if (pageFailed) web.loadUrl(URL); }
+    @Override protected void onResume() {
+        super.onResume();
+        hideSystemUi();
+        if (pageFailed) web.loadUrl(URL);
+        if (wakeEnabled) restartWake(800);
+    }
+
+    @Override protected void onPause() {
+        super.onPause();
+        ui.removeCallbacks(wakeRunner);
+        if ("wake".equals(mode) && speech != null) { speech.cancel(); mode = "idle"; }
+        unmuteBeeps();
+    }
+
     @Override public void onWindowFocusChanged(boolean f) { super.onWindowFocusChanged(f); if (f) hideSystemUi(); }
 
-    /* ---------- Offline ---------- */
     private void showOffline() {
         pageFailed = true;
         String html = "<html><body style='margin:0;height:100vh;background:#07080C;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px'>"
@@ -196,7 +195,7 @@ public class MainActivity extends Activity {
         ui.postDelayed(new Runnable() { @Override public void run() { if (pageFailed) web.loadUrl(URL); } }, 15000);
     }
 
-    /* ---------- Tasten ---------- */
+    /* ================= Tasten ================= */
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
         int code = e.getKeyCode();
@@ -207,13 +206,13 @@ public class MainActivity extends Activity {
                     ui.postDelayed(longPress, 700);
                 } else if (e.getAction() == KeyEvent.ACTION_UP) {
                     ui.removeCallbacks(longPress);
-                    if (!longFired && bootDone) { sel = (sel + ITEMS.length - 1) % ITEMS.length; statusLine = ""; draw(); }
+                    if (!longFired) { sel = (sel + ITEMS.length - 1) % ITEMS.length; paintMenu(); }
                 }
                 return true;
             }
             if (code == KeyEvent.KEYCODE_VOLUME_DOWN) {
-                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0 && bootDone) {
-                    sel = (sel + 1) % ITEMS.length; statusLine = ""; draw();
+                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) {
+                    sel = (sel + 1) % ITEMS.length; paintMenu();
                 }
                 return true;
             }
@@ -230,96 +229,103 @@ public class MainActivity extends Activity {
         return super.dispatchKeyEvent(e);
     }
 
-    /* ---------- Notfall-Menü zeichnen ---------- */
-    private static final int MENU_START = 8;
-    private static final String[] BOOT = {
-            "BASTELRAUM OS  ::  RECOVERY v" + VERSION,
-            "==================================================",
-            "",
-            "> Gerät .......... " + Build.MANUFACTURER + " " + Build.MODEL,
-            "> Android ........ " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")",
-            "> Dashboard ...... läuft",
-            "--------------------------------------------------",
-            ""
-    };
+    /* ================= Recovery-Bildschirm (wie die echte Android-Recovery) ================= */
+    private int dp(float v) { return Math.round(v * getResources().getDisplayMetrics().density); }
 
-    private void openRecovery() {
-        recOpen = true; bootDone = false; bootLines = 0; sel = 0; statusLine = "";
-        recovery.setVisibility(View.VISIBLE);
-        recovery.setAlpha(0f);
-        recovery.animate().alpha(1f).setDuration(250).start();
-        draw();
-        ui.removeCallbacks(blink);
-        ui.postDelayed(blink, 500);
-        bootStep();
+    private TextView headLine(String t, int color, float size) {
+        TextView v = new TextView(this);
+        v.setText(t);
+        v.setTextColor(color);
+        v.setTextSize(size);
+        v.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+        v.setPadding(0, dp(1), 0, dp(1));
+        return v;
     }
 
-    private void bootStep() {
-        if (!recOpen) return;
-        if (bootLines < BOOT.length + ITEMS.length) {
-            bootLines++;
-            draw();
-            ui.postDelayed(new Runnable() { @Override public void run() { bootStep(); } }, bootLines < BOOT.length ? 90 : 55);
-        } else {
-            bootDone = true;
-            draw();
+    private void buildRecovery() {
+        recovery = new LinearLayout(this);
+        recovery.setOrientation(LinearLayout.VERTICAL);
+        recovery.setBackgroundColor(Color.BLACK);
+        recovery.setPadding(dp(28), dp(22), dp(28), dp(18));
+        recovery.setVisibility(View.GONE);
+        recovery.setClickable(true);
+
+        recovery.addView(headLine("Bastelraum Recovery", Color.WHITE, 17));
+        recovery.addView(headLine(Build.FINGERPRINT, HEAD_FG, 13));
+        recovery.addView(headLine("Version " + Build.VERSION.RELEASE + " (" + Build.DISPLAY + ")", HEAD_FG, 13));
+        recovery.addView(headLine("Gerät: " + Build.MANUFACTURER + " " + Build.MODEL + "  ·  Dashboard-App " + VERSION, HEAD_FG, 13));
+        recovery.addView(headLine("Lauter/Leiser zum Auswählen. Lauter gedrückt halten zum Bestätigen.", HEAD_FG, 13));
+
+        View gap = new View(this);
+        recovery.addView(gap, new LinearLayout.LayoutParams(-1, dp(16)));
+
+        for (int i = 0; i < ITEMS.length; i++) {
+            final int idx = i;
+            TextView v = new TextView(this);
+            v.setText(ITEMS[i]);
+            v.setTextSize(19);
+            v.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+            v.setPadding(dp(10), dp(9), dp(10), dp(9));
+            v.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View view) {
+                    if (sel == idx) confirm(); else { sel = idx; paintMenu(); }
+                }
+            });
+            itemViews[i] = v;
+            recovery.addView(v, new LinearLayout.LayoutParams(-1, -2));
         }
+
+        View fill = new View(this);
+        recovery.addView(fill, new LinearLayout.LayoutParams(-1, 0, 1f));
+
+        recLog = headLine("", HEAD_FG, 13);
+        recovery.addView(recLog, new LinearLayout.LayoutParams(-1, -2));
+    }
+
+    private void paintMenu() {
+        for (int i = 0; i < ITEMS.length; i++) {
+            boolean on = i == sel;
+            itemViews[i].setBackgroundColor(on ? SEL_BG : Color.TRANSPARENT);
+            itemViews[i].setTextColor(on ? Color.BLACK : ITEM_FG);
+        }
+    }
+
+    private void log(String line) {
+        CharSequence old = recLog.getText();
+        String t = (old.length() > 0 ? old + "\n" : "") + line;
+        String[] lines = t.split("\n");
+        if (lines.length > 6) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = lines.length - 6; i < lines.length; i++) { if (sb.length() > 0) sb.append("\n"); sb.append(lines[i]); }
+            t = sb.toString();
+        }
+        recLog.setText(t);
+    }
+
+    private void openRecovery() {
+        recOpen = true; sel = 0;
+        recLog.setText("");
+        log("Supported API: 3");
+        DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
+        log("-- Geräte-Admin: " + (dpm.isAdminActive(new ComponentName(this, AdminReceiver.class)) ? "aktiv" : "aus")
+                + "   Geräte-Chef: " + (dpm.isDeviceOwnerApp(getPackageName()) ? "ja" : "nein"));
+        paintMenu();
+        recovery.setVisibility(View.VISIBLE);
+        ui.removeCallbacks(wakeRunner);
+        if (speech != null && "wake".equals(mode)) { speech.cancel(); mode = "idle"; }
     }
 
     private void closeRecovery() {
         recOpen = false;
-        ui.removeCallbacks(blink);
-        recovery.animate().alpha(0f).setDuration(200).withEndAction(new Runnable() {
-            @Override public void run() { recovery.setVisibility(View.GONE); }
-        }).start();
+        recovery.setVisibility(View.GONE);
         hideSystemUi();
+        if (wakeEnabled) restartWake(800);
     }
 
-    private void draw() {
-        SpannableStringBuilder sb = new SpannableStringBuilder();
-        int green = Color.parseColor("#39FF7A");
-        int dim = Color.parseColor("#1F8A45");
-        int amber = Color.parseColor("#FFC56B");
-        for (int i = 0; i < BOOT.length && i < bootLines; i++) {
-            int st = sb.length();
-            sb.append(BOOT[i]).append("\n");
-            if (i == 0) sb.setSpan(new ForegroundColorSpan(amber), st, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            else if (i != 3 && i != 4 && i != 5) sb.setSpan(new ForegroundColorSpan(dim), st, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        int shown = Math.max(0, bootLines - BOOT.length);
-        for (int i = 0; i < ITEMS.length && i < shown; i++) {
-            int st = sb.length();
-            boolean on = bootDone && i == sel;
-            String line = (on ? " >> " : "    ") + ITEMS[i] + "  ";
-            sb.append(line);
-            if (on) {
-                sb.setSpan(new BackgroundColorSpan(green), st, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                sb.setSpan(new ForegroundColorSpan(Color.BLACK), st, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-            sb.append("\n");
-        }
-        if (bootDone) {
-            int st = sb.length();
-            sb.append("\n--------------------------------------------------\n");
-            sb.append("[LAUTER] hoch    [LEISER] runter    [LAUTER halten] OK\n");
-            sb.setSpan(new ForegroundColorSpan(dim), st, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            if (!statusLine.isEmpty()) {
-                int s2 = sb.length();
-                sb.append("\n").append(statusLine).append("\n");
-                sb.setSpan(new ForegroundColorSpan(amber), s2, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-        }
-        sb.append(cursorOn ? "\n█" : "\n ");
-        recText.setText(sb);
-    }
-
-    /* ---------- Aktionen ---------- */
     private void confirm() {
-        if (!bootDone) return;
         final int i = sel;
-        statusLine = "> " + ITEMS[i] + " ... OK";
-        draw();
-        ui.postDelayed(new Runnable() { @Override public void run() { doAction(i); } }, 600);
+        log("-- " + ITEMS[i] + " ...");
+        ui.postDelayed(new Runnable() { @Override public void run() { doAction(i); } }, 450);
     }
 
     private void doAction(int i) {
@@ -360,10 +366,10 @@ public class MainActivity extends Activity {
                 break;
             case 6:
                 if (Build.VERSION.SDK_INT >= 24 && dpm.isDeviceOwnerApp(getPackageName())) {
+                    log("Rebooting...");
                     dpm.reboot(admin);
                 } else {
-                    statusLine = "! Neustart geht nur im Geräte-Chef-Modus (einmalig per PC einrichten)";
-                    draw();
+                    log("E: Neustart nur im Geräte-Chef-Modus möglich.");
                 }
                 break;
         }
@@ -374,7 +380,7 @@ public class MainActivity extends Activity {
         catch (Exception ex) { return false; }
     }
 
-    /* ---------- Brücke zum Dashboard (JavaScript: window.BastelOS) ---------- */
+    /* ================= Brücke zum Dashboard ================= */
     private class Bridge {
         @JavascriptInterface public boolean isApp() { return true; }
         @JavascriptInterface public String version() { return VERSION; }
@@ -400,49 +406,162 @@ public class MainActivity extends Activity {
             } });
         }
         @JavascriptInterface public void startSpeech(final String inputId) {
-            ui.post(new Runnable() { @Override public void run() { listen(inputId); } });
+            ui.post(new Runnable() { @Override public void run() { listenCommand(inputId); } });
+        }
+        @JavascriptInterface public void setWakeWord(final boolean on) {
+            ui.post(new Runnable() { @Override public void run() {
+                wakeEnabled = on;
+                if (on) restartWake(1500);
+                else { ui.removeCallbacks(wakeRunner); if ("wake".equals(mode) && speech != null) { speech.cancel(); mode = "idle"; } }
+            } });
+        }
+        @JavascriptInterface public void speak(final String text) {
+            ui.post(new Runnable() { @Override public void run() {
+                if (ttsReady) tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "luigi");
+            } });
         }
     }
 
-    private void sendSpeech(String id, String text, String err) {
-        String js = "window.onNativeSpeech && window.onNativeSpeech(" + JSONObject.quote(id) + "," + JSONObject.quote(text == null ? "" : text) + "," + (err == null ? "null" : JSONObject.quote(err)) + ")";
-        web.evaluateJavascript(js, null);
-    }
+    private void js(String code) { web.evaluateJavascript(code, null); }
+    private String q(String s) { return JSONObject.quote(s == null ? "" : s); }
 
-    private void listen(String inputId) {
-        speechTarget = inputId;
-        if (!SpeechRecognizer.isRecognitionAvailable(this)) { sendSpeech(inputId, null, "Spracheingabe ist auf diesem Tablet nicht verfügbar"); return; }
-        if (Build.VERSION.SDK_INT >= 23 && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            askPermissions(); sendSpeech(inputId, null, "Bitte das Mikrofon erlauben"); return;
-        }
-        if (speech != null) speech.destroy();
+    /* ================= Spracherkennung: „Hey Luigi“ + Befehle ================= */
+    private void ensureRecognizer() {
+        if (speech != null) return;
         speech = SpeechRecognizer.createSpeechRecognizer(this);
         speech.setRecognitionListener(new RecognitionListener() {
             @Override public void onResults(Bundle r) {
                 ArrayList<String> m = r.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                sendSpeech(speechTarget, m != null && !m.isEmpty() ? m.get(0) : "", null);
+                String text = m != null && !m.isEmpty() ? m.get(0) : "";
+                if ("cmd".equals(mode)) {
+                    mode = "idle";
+                    js("window.onNativeSpeech && window.onNativeSpeech(" + q(speechTarget) + "," + q(text) + ",null)");
+                    restartWake(2500);
+                } else if ("wake".equals(mode)) {
+                    mode = "idle";
+                    String hit = null;
+                    if (m != null) for (String cand : m) { String rest = afterWakeWord(cand); if (rest != null) { hit = rest; break; } }
+                    if (hit != null) {
+                        unmuteBeeps();
+                        js("window.onWakeWord && window.onWakeWord(" + q(hit) + ")");
+                    } else {
+                        restartWake(150);
+                    }
+                }
+            }
+            @Override public void onPartialResults(Bundle p) {
+                if (!"cmd".equals(mode)) return;
+                ArrayList<String> m = p.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                if (m != null && !m.isEmpty()) js("window.onNativePartial && window.onNativePartial(" + q(speechTarget) + "," + q(m.get(0)) + ")");
             }
             @Override public void onError(int error) {
-                sendSpeech(speechTarget, null, error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT ? "Nichts verstanden – nochmal versuchen" : "Spracheingabe gerade nicht möglich");
+                if ("cmd".equals(mode)) {
+                    mode = "idle";
+                    String msg = error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT
+                            ? "Nichts verstanden – nochmal versuchen" : "Spracheingabe gerade nicht möglich";
+                    js("window.onNativeSpeech && window.onNativeSpeech(" + q(speechTarget) + ",''," + q(msg) + ")");
+                    restartWake(2500);
+                } else {
+                    mode = "idle";
+                    restartWake(error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY ? 2000 : 300);
+                }
+            }
+            @Override public void onRmsChanged(float v) {
+                if (!"cmd".equals(mode)) return;
+                long now = System.currentTimeMillis();
+                if (now - lastRms < 80) return;
+                lastRms = now;
+                js("window.onNativeRms && window.onNativeRms(" + v + ")");
             }
             @Override public void onReadyForSpeech(Bundle p) {}
             @Override public void onBeginningOfSpeech() {}
-            @Override public void onRmsChanged(float v) {}
             @Override public void onBufferReceived(byte[] b) {}
             @Override public void onEndOfSpeech() {}
-            @Override public void onPartialResults(Bundle p) {}
             @Override public void onEvent(int t, Bundle p) {}
         });
+    }
+
+    /** Text nach „Luigi“, oder null, wenn Luigi nicht gerufen wurde. */
+    private String afterWakeWord(String said) {
+        String s = said.toLowerCase(Locale.GERMAN);
+        String[] keys = {"luigi", "luiggi", "louigi", "luidschi", "lujdschi", "luici", "lu igi", "lui gi"};
+        for (String k : keys) {
+            int at = s.indexOf(k);
+            if (at >= 0) return said.substring(Math.min(said.length(), at + k.length())).replaceFirst("^[\\s,.!?]+", "");
+        }
+        return null;
+    }
+
+    private Intent recIntent(boolean partial) {
         Intent in = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         in.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         in.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "de-DE");
-        in.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-        speech.startListening(in);
+        in.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
+        in.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, partial);
+        in.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
+        return in;
+    }
+
+    private boolean canListen() {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) return false;
+        return Build.VERSION.SDK_INT < 23 || checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void restartWake(long delay) {
+        ui.removeCallbacks(wakeRunner);
+        if (wakeEnabled) ui.postDelayed(wakeRunner, delay);
+    }
+
+    private void startWake() {
+        if (!wakeEnabled || recOpen || "cmd".equals(mode) || !canListen()) return;
+        if (tts != null && tts.isSpeaking()) { restartWake(800); return; }
+        ensureRecognizer();
+        muteBeeps();
+        mode = "wake";
+        try { speech.startListening(recIntent(false)); } catch (Exception e) { mode = "idle"; restartWake(2000); }
+    }
+
+    private void listenCommand(String inputId) {
+        speechTarget = inputId;
+        if (!canListen()) {
+            askPermissions();
+            js("window.onNativeSpeech && window.onNativeSpeech(" + q(inputId) + ",''," + q("Bitte das Mikrofon erlauben") + ")");
+            return;
+        }
+        ui.removeCallbacks(wakeRunner);
+        ensureRecognizer();
+        try { speech.cancel(); } catch (Exception ignored) {}
+        unmuteBeeps();
+        mode = "cmd";
+        speech.startListening(recIntent(true));
+    }
+
+    /* Der Erkennungs-Piep beim Dauerzuhören soll nicht nerven */
+    private boolean muted = false;
+    private void muteBeeps() {
+        if (muted || Build.VERSION.SDK_INT < 23) return;
+        try {
+            AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            am.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_MUTE, 0);
+            am.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0);
+            muted = true;
+        } catch (Exception ignored) {}
+    }
+    private void unmuteBeeps() {
+        if (!muted || Build.VERSION.SDK_INT < 23) return;
+        try {
+            AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            am.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_UNMUTE, 0);
+            am.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0);
+        } catch (Exception ignored) {}
+        muted = false;
     }
 
     @Override
     protected void onDestroy() {
+        unmuteBeeps();
         if (speech != null) speech.destroy();
+        if (tts != null) tts.shutdown();
         super.onDestroy();
     }
 }

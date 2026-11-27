@@ -59,6 +59,39 @@ html.lite .fade{animation-duration:.3s}
 #dock button.arm{background:rgba(255,190,110,.35);animation:pulse 1s ease-in-out infinite}
 .setTile{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:18px;border-radius:22px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);text-align:left;font-size:17px;font-weight:500}
 .setTile:active{transform:scale(.96)}
+/* Luigi */
+#luigi{position:absolute;left:0;top:330px;width:40px;height:140px;border:0;padding:0;background:transparent;z-index:41;display:flex;align-items:center;transition:opacity .3s}
+.lhandle{display:block;width:5px;height:64px;border-radius:0 5px 5px 0;background:linear-gradient(180deg,#FFB547,#FF5FA2,#8B6CFF,#4FA3FF,#FFB547);background-size:100% 300%;
+  box-shadow:0 0 14px rgba(160,120,255,.65);animation:lflow 6s linear infinite,lbreath 5s ease-in-out infinite;transition:height .3s,width .3s}
+@keyframes lflow{to{background-position:0 300%}}
+@keyframes lbreath{0%,70%,100%{height:64px}80%{height:84px}90%{height:58px}}
+#luigi:active .lhandle{width:8px}
+#luigi.away{opacity:0;pointer-events:none}
+#lGlow{position:absolute;left:0;top:0;bottom:0;width:220px;z-index:37;pointer-events:none;opacity:0;transform:scaleX(.15);transform-origin:left;
+  transition:opacity .45s,transform .7s cubic-bezier(.2,1,.3,1);
+  background:linear-gradient(90deg,rgba(255,160,80,.55),rgba(190,110,255,.28) 30%,rgba(80,140,255,.08) 65%,transparent);
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent)}
+#lGlow.on{opacity:1;transform:none;animation:lglow 2.6s ease-in-out infinite alternate}
+@keyframes lglow{to{opacity:.65}}
+#lShade{position:absolute;inset:0;z-index:36;background:rgba(2,3,10,.45);animation:fadein .4s both}
+#lPanel{position:absolute;left:30px;bottom:122px;width:580px;z-index:42;border-radius:30px;padding:22px 28px 24px;display:flex;flex-direction:column;gap:12px;
+  background:rgba(22,20,36,.86)!important;transform:translateX(-660px) scale(.96);opacity:0;pointer-events:none;
+  transition:transform .65s cubic-bezier(.2,1.15,.3,1),opacity .35s}
+#lPanel.open{transform:none;opacity:1;pointer-events:auto}
+.lhead{display:flex;align-items:center;gap:12px;font-size:14px;letter-spacing:.5px;color:rgba(255,255,255,.6)}
+.ldots{display:flex;gap:5px;align-items:center;height:26px;--lv:0}
+.ldots i{display:block;width:8px;height:8px;border-radius:4px;transition:height .1s}
+.ldots i:nth-child(1){background:#FFB547}.ldots i:nth-child(2){background:#FF5FA2}.ldots i:nth-child(3){background:#8B6CFF}.ldots i:nth-child(4){background:#4FA3FF}
+#lPanel.listen .ldots i{animation:ldot .9s ease-in-out infinite}
+#lPanel.listen .ldots i:nth-child(2){animation-delay:.12s}#lPanel.listen .ldots i:nth-child(3){animation-delay:.24s}#lPanel.listen .ldots i:nth-child(4){animation-delay:.36s}
+@keyframes ldot{50%{height:calc(12px + var(--lv) * 14px)}}
+#lPanel.think .ldots i{animation:lthink .6s ease-in-out infinite}
+#lPanel.think .ldots i:nth-child(2){animation-delay:.1s}#lPanel.think .ldots i:nth-child(3){animation-delay:.2s}#lPanel.think .ldots i:nth-child(4){animation-delay:.3s}
+@keyframes lthink{50%{transform:translateY(-7px)}}
+#lHeard{font-size:26px;font-weight:500;line-height:1.25;color:#fff;min-height:33px}
+#lSay{font-size:20px;line-height:1.4;color:#FFD9A8;animation:lpop .5s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes lpop{from{opacity:0;transform:translateY(12px)}}
+html.lite #lGlow.on{animation:none}
 .upspin{animation:upspin 1s linear infinite}@keyframes upspin{to{transform:rotate(360deg)}}
 .eqbar{width:5px;height:100%;border-radius:3px;background:rgba(255,255,255,.85);transform-origin:bottom;transform:scaleY(.15)}
 .playing .eqbar{animation:eq .9s ease-in-out infinite alternate}@keyframes eq{0%{transform:scaleY(.15)}100%{transform:scaleY(1)}}
@@ -254,6 +287,16 @@ input.field::placeholder{color:rgba(255,255,255,.5)}
     </nav>
   </div>
 
+  <!-- ================= LUIGI ================= -->
+  <div id="lShade" class="hidden"></div>
+  <div id="lGlow"></div>
+  <button id="luigi" aria-label="Luigi – Sprachassistent"><span class="lhandle"></span></button>
+  <div id="lPanel" class="glass" aria-live="polite">
+    <div class="lhead"><span class="ldots"><i></i><i></i><i></i><i></i></span><span>Luigi</span></div>
+    <span id="lHeard"></span>
+    <div id="lSay" class="hidden"></div>
+  </div>
+
   <div id="sheet" class="hidden" style="position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center">
     <div id="sheetBox" class="glass fade" style="width:620px;border-radius:34px;padding:28px 30px;display:flex;flex-direction:column;gap:18px;background:rgba(30,32,44,.75)"></div>
   </div>
@@ -416,6 +459,7 @@ function show(v) {
   $('night2').classList.toggle('hidden', v !== 'night2');
   document.querySelectorAll('#dock button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
   tick();
+  $('luigi').classList.toggle('hidden', v.startsWith('night'));
   try { if (window.BastelOS) BastelOS.setBrightness(v.startsWith('night') ? 0.15 : -1); } catch (e) {}
 }
 let nightArm = 0;
@@ -780,10 +824,208 @@ document.addEventListener('click', (ev) => {
 });
 
 window.onNativeSpeech = (inputId, text, error) => {
+  if (inputId === '__luigi') { luigiHeard(text, error); return; }
   const b = window.__micBtn; if (b) b.classList.remove('on');
   if (error) { say(error); return; }
   const el = $(inputId); if (el && text) el.value = text.charAt(0).toUpperCase() + text.slice(1);
 };
+
+/* =========================================================
+   LUIGI – kleiner Sprachassistent
+   ========================================================= */
+const L = { open: false, closeT: 0, rec: null };
+function speak(t) {
+  try { if (window.BastelOS && BastelOS.speak) { BastelOS.speak(t); return; } } catch (e) {}
+  try { const u = new SpeechSynthesisUtterance(t); u.lang = 'de-DE'; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) {}
+}
+function luigiOpen() {
+  clearTimeout(L.closeT);
+  if (view.startsWith('night')) show('home');
+  L.open = true; lastTouch = Date.now();
+  $('lShade').classList.remove('hidden'); $('lGlow').classList.add('on'); $('luigi').classList.add('away');
+  $('lSay').classList.add('hidden'); $('lHeard').textContent = 'Ich höre …';
+  const o = $('lPanel'); o.classList.add('open', 'listen'); o.classList.remove('think');
+  tone([[880, 0, 0.15], [1320, 0.08, 0.25]], 'sine', 0.12);
+}
+function luigiListen() {
+  luigiOpen();
+  if (window.BastelOS && BastelOS.startSpeech) { BastelOS.startSpeech('__luigi'); return; }
+  if (!SR) { luigiReply('Ich kann hier leider nicht zuhören. Nimm Chrome oder die Tablet-App.'); return; }
+  const rec = new SR(); rec.lang = 'de-DE'; rec.interimResults = true; L.rec = rec;
+  let last = '';
+  rec.onresult = (e) => { last = ''; for (const r of e.results) last += r[0].transcript; $('lHeard').textContent = '„' + last + '“'; };
+  rec.onerror = () => {};
+  rec.onend = () => { L.rec = null; luigiHeard(last, last ? null : 'nichts'); };
+  rec.start();
+}
+window.onNativePartial = (id, t) => { if (id === '__luigi' && t) $('lHeard').textContent = '„' + t + '“'; };
+window.onNativeRms = (v) => { document.querySelector('.ldots').style.setProperty('--lv', Math.max(0, Math.min(1, (v + 2) / 12)).toFixed(2)); };
+window.onWakeWord = (rest) => {
+  luigiOpen();
+  if (rest && rest.trim().length > 2) { luigiHeard(rest.trim(), null); return; }
+  if (window.BastelOS && BastelOS.startSpeech) BastelOS.startSpeech('__luigi');
+};
+function luigiHeard(text, error) {
+  const o = $('lPanel'); o.classList.remove('listen');
+  if (error || !text) { luigiReply('Ich hab dich nicht verstanden. Tipp mich an und versuch es nochmal.'); return; }
+  $('lHeard').textContent = '„' + text.charAt(0).toUpperCase() + text.slice(1) + '“';
+  o.classList.add('think');
+  setTimeout(() => luigiReply(luigiDo(text)), 450);
+}
+function luigiReply(t) {
+  const o = $('lPanel'); o.classList.remove('think', 'listen');
+  const b = $('lSay'); b.textContent = t; b.classList.remove('hidden');
+  b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
+  speak(t);
+  clearTimeout(L.closeT); L.closeT = setTimeout(luigiClose, 5200);
+}
+function luigiClose() {
+  L.open = false; if (L.rec) try { L.rec.stop(); } catch (e) {}
+  $('lPanel').classList.remove('open', 'listen', 'think');
+  $('lGlow').classList.remove('on'); $('lShade').classList.add('hidden');
+  setTimeout(() => { if (!L.open) $('luigi').classList.remove('away'); }, 500);
+}
+$('luigi').onclick = () => { if (L.open) luigiClose(); else luigiListen(); };
+$('lPanel').onclick = () => { if (!$('lPanel').classList.contains('listen')) luigiListen(); };
+$('lShade').onclick = luigiClose;
+
+/* --- Zahlen und Zeiten verstehen --- */
+const NUMW = { ein: 1, eins: 1, eine: 1, einen: 1, einer: 1, zwei: 2, drei: 3, vier: 4, fünf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9, zehn: 10, elf: 11, zwölf: 12,
+  dreizehn: 13, vierzehn: 14, fünfzehn: 15, sechzehn: 16, siebzehn: 17, achtzehn: 18, neunzehn: 19, zwanzig: 20, dreißig: 30, vierzig: 40, fünfzig: 50, sechzig: 60 };
+function wordNum(w) {
+  if (/^\d+([.,]\d+)?$/.test(w)) return parseFloat(w.replace(',', '.'));
+  if (NUMW[w] != null) return NUMW[w];
+  const m = w.match(/^(\w+?)und(zwanzig|dreißig|vierzig|fünfzig)$/);
+  if (m && NUMW[m[1]] != null) return NUMW[m[1]] + NUMW[m[2]];
+  return null;
+}
+function parseDuration(t) {
+  let sec = 0;
+  if (/halbe stunde/.test(t)) sec += 1800;
+  if (/viertelstunde/.test(t)) sec += 900;
+  if (/anderthalb stunden|eineinhalb stunden/.test(t)) sec += 5400;
+  const re = /([\wäöüß.,]+)\s*(stunden?|std|minuten?|min|sekunden?|sek)\b/g; let m;
+  while ((m = re.exec(t))) {
+    const n = wordNum(m[1]); if (n == null) continue;
+    sec += n * (m[2].startsWith('st') ? 3600 : m[2].startsWith('mi') ? 60 : 1);
+  }
+  return Math.round(sec);
+}
+function durText(s) {
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60, p = [];
+  if (h) p.push(h + (h === 1 ? ' Stunde' : ' Stunden'));
+  if (m) p.push(m + (m === 1 ? ' Minute' : ' Minuten'));
+  if (x) p.push(x + (x === 1 ? ' Sekunde' : ' Sekunden'));
+  return p.join(' und ');
+}
+
+/* „dass das Essen fertig ist“ -> „Das Essen ist fertig“ */
+function dassToMain(x) {
+  const w = x.split(' '); if (w.length < 3) return x;
+  const verb = w.pop();
+  const art = /^(der|die|das|dein|deine|mein|meine|ein|eine|unser|unsere)$/i.test(w[0]);
+  const pro = /^(du|er|sie|es|wir|ihr|ich|man)$/i.test(w[0]);
+  const at = art ? 2 : pro ? 1 : 1;
+  w.splice(at, 0, verb); return w.join(' ');
+}
+
+/* --- Befehle --- */
+function luigiDo(raw) {
+  const t = raw.toLowerCase().replace(/[!?.]/g, ' ').replace(/\s+/g, ' ').trim();
+  const has = (...w) => w.some((x) => t.includes(x));
+
+  // Timer
+  if (has('timer', 'wecker', 'erinner') || (/\b(stell|setz|starte?)\b/.test(t) && /(minute|sekunde|stunde)/.test(t))) {
+    if (has('stopp', 'stop', 'aus', 'abbrech', 'beend', 'lösch')) {
+      if (!timers.length) return 'Es läuft gerade kein Timer.';
+      timers.shift(); if (!timers.length) editing = true; renderTimer(); return 'Okay, Timer ist gestoppt.';
+    }
+    if (has('pause', 'anhalten')) { const m = timers[0]; if (m && m.pausedLeft == null) { m.pausedLeft = left(m); renderTimer(); return 'Timer ist pausiert.'; } return 'Da ist nichts zum Pausieren.'; }
+    if (has('weiter', 'fortsetz')) { const m = timers[0]; if (m && m.pausedLeft != null) { m.endAt = Date.now() + m.pausedLeft * 1000; m.pausedLeft = null; renderTimer(); return 'Timer läuft weiter.'; } return 'Es ist kein Timer pausiert.'; }
+    if (has('wie lange', 'wie viel zeit', 'restzeit', 'noch')) {
+      if (!timers.length) return 'Es läuft gerade kein Timer.';
+      return 'Noch ' + durText(left(timers[0])) + '.';
+    }
+    const sec = parseDuration(t);
+    if (!sec) return 'Wie lange soll der Timer laufen? Sag zum Beispiel: Timer auf 10 Minuten.';
+    audio();
+    timers.unshift({ id: nid++, total: sec, endAt: Date.now() + sec * 1000, pausedLeft: null });
+    timers = timers.slice(0, 5); editing = false; renderTimer(); show('home');
+    return 'Klar! Timer läuft ' + durText(sec) + '.';
+  }
+
+  // Stoppuhr
+  if (has('stoppuhr')) {
+    const t2 = t.replace(/stoppuhr/g, ''); const has2 = (...w) => w.some((x) => t2.includes(x));
+    if (has2('zurück', 'reset', 'null')) { swAcc = 0; swStart = 0; renderSw(); return 'Stoppuhr steht wieder auf null.'; }
+    if (has2('stopp', 'stop', 'anhalten', ' aus')) { if (swStart) { swAcc += Date.now() - swStart; swStart = 0; } renderSw(); return 'Stoppuhr angehalten: ' + $('swTime').textContent + '.'; }
+    if (!swStart) swStart = Date.now(); renderSw(); return 'Stoppuhr läuft.';
+  }
+  if (false) {
+    if (has('zurück', 'reset', 'null')) { swAcc = 0; swStart = 0; renderSw(); return 'Stoppuhr steht wieder auf null.'; }
+    if (has('stopp', 'stop', 'anhalten', 'aus')) { if (swStart) { swAcc += Date.now() - swStart; swStart = 0; } renderSw(); return 'Stoppuhr angehalten: ' + $('swTime').textContent + '.'; }
+    if (!swStart) swStart = Date.now(); renderSw(); return 'Stoppuhr läuft.';
+  }
+
+  // Radio
+  const st = STATIONS.findIndex((x) => {
+    const k = x.name.toLowerCase();
+    return (k.includes('brocken') && t.includes('brocken')) || (k.includes('beatly') && /beat|bitly|bietly/.test(t)) ||
+      (k.includes('sputnik') && t.includes('sputnik')) || (k.includes('jump') && /jump|dschamp|tschamp/.test(t)) || (k.includes('rtl') && /rtl|89/.test(t));
+  });
+  if (has('radio', 'musik', 'sender') || st >= 0 || has('lauter', 'leiser')) {
+    if (has('lauter')) { const v = Math.min(100, Math.round(player.volume * 100) + 15); player.volume = v / 100; $('vol').value = v; store.set('volume', v); return 'Lauter gemacht.'; }
+    if (has('leiser')) { const v = Math.max(0, Math.round(player.volume * 100) - 15); player.volume = v / 100; $('vol').value = v; store.set('volume', v); return 'Etwas leiser.'; }
+    if (has(' aus', 'stopp', 'stop', 'pause', 'ruhe')) { stopRadio(); return 'Radio ist aus.'; }
+    if (has('nächste', 'weiter')) { const i = (station + 1) % STATIONS.length; playStation(i); return 'Hier ist ' + STATIONS[i].name + '.'; }
+    const i = st >= 0 ? st : station; playStation(i); return 'Ich mach ' + STATIONS[i].name + ' an.';
+  }
+
+  // Odin
+  if (t.includes('odin')) {
+    const m = raw.match(/(?:sag|schreib|schick|richte)\w*\s+odin\s*,?\s*(?:dass\s+)?(.+)/i);
+    if (m && m[1] && m[1].trim().length > 1) {
+      let msgTxt = m[1].trim().replace(/\s+aus$/i, '');
+      if (/^dass\s/i.test(raw.slice(raw.toLowerCase().indexOf('odin') + 4).trim().replace(/^,\s*/, ''))) msgTxt = dassToMain(msgTxt);
+      sendToOdin(msgTxt); sndSend();
+      return 'Ich hab Odin geschrieben: „' + msgTxt.charAt(0).toUpperCase() + msgTxt.slice(1) + '“';
+    }
+    $('callBtn').click(); return 'Ich rufe Odin für dich.';
+  }
+
+  // Material
+  const mm = t.match(/(?:füg|pack|schreib|trag)\w*\s+(?:(\S+)\s+)?(.+?)\s+(?:hinzu|dazu|ein|auf die liste)\b/);
+  if (mm || has('material')) {
+    if (!mm) { show('mat'); return 'Hier ist dein Material.'; }
+    let n = mm[1] ? wordNum(mm[1]) : null, name = mm[2];
+    if (n == null && mm[1]) { name = mm[1] + ' ' + mm[2]; n = 1; }
+    name = name.replace(/^(stück|mal|packungen?|flaschen?)\s+/, '').trim(); name = name.charAt(0).toUpperCase() + name.slice(1);
+    const ex = mats.find((x) => x.name.toLowerCase() === name.toLowerCase());
+    if (ex) ex.qty += n || 1; else mats.push({ id: Date.now(), name, qty: n || 1, price: 0 });
+    saveAll(); return (n || 1) + '× ' + name + ' ist eingetragen.';
+  }
+
+  // Uhrzeit, Datum, Wetter
+  if (has('wie spät', 'uhrzeit', 'wie viel uhr')) { const d = new Date(); return 'Es ist ' + d.getHours() + ':' + p2(d.getMinutes()) + ' Uhr.'; }
+  if (has('welcher tag', 'datum', 'heute ist')) return 'Heute ist ' + new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }) + '.';
+  if (has('wetter', 'grad', 'temperatur', 'regnet', 'kalt', 'warm')) {
+    if (!weather) return 'Das Wetter hab ich gerade nicht.';
+    return 'Draußen sind es ' + weather.temp + ' Grad, ' + weather.desc.toLowerCase() + '. Gleich: ' + weather.hourly.map((h) => h.t.replace(' Uhr', '') + ' Uhr ' + h.v.replace('°', ' Grad')).slice(0, 2).join(', ') + '.';
+  }
+
+  // Ansichten
+  if (has('nachtmodus', 'gute nacht', 'bildschirmschoner', 'schlafen')) { setTimeout(() => show('night2'), 2500); return 'Gute Nacht! Ich mach es gemütlich.'; }
+  if (has('startseite', 'dashboard', 'zurück')) { show('home'); return 'Bitte schön.'; }
+  if (has('einstellung')) { setTimeout(openSettings, 1500); return 'Hier sind die Einstellungen.'; }
+
+  // Smalltalk
+  if (has('danke')) return 'Gern geschehen!';
+  if (has('hallo', 'hi ', 'guten morgen', 'guten tag', 'servus', 'moin')) return 'Hallo Mama! Was kann ich für dich tun?';
+  if (has('wer bist du', 'wie heißt du')) return 'Ich bin Luigi, dein kleiner Helfer im Bastelraum.';
+  if (has('was kannst du', 'hilfe')) return 'Ich kann Timer stellen, Radio anmachen, Odin rufen, Material eintragen und dir Uhrzeit und Wetter sagen.';
+  return 'Das hab ich nicht verstanden. Sag zum Beispiel: Stell einen Timer auf 10 Minuten.';
+}
+if (window.BastelOS && BastelOS.setWakeWord) { try { BastelOS.setWakeWord(true); } catch (e) {} }
 
 /* =========================================================
    RUHEMODUS NACH 5 MINUTEN OHNE BEDIENUNG
@@ -794,13 +1036,13 @@ let lastTouch = Date.now();
 setInterval(() => {
   const ringing = timers.some((t) => left(t) <= 0);
   const busy = !$('sheet').classList.contains('hidden') || document.activeElement && document.activeElement.tagName === 'INPUT';
-  if (!ringing && !busy && !view.startsWith('night') && Date.now() - lastTouch > IDLE_MS) show('night2');
+  if (!ringing && !busy && !L.open && !view.startsWith('night') && Date.now() - lastTouch > IDLE_MS) show('night2');
 }, 5000);
 
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
