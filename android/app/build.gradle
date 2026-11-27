@@ -1,0 +1,45 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'de.bastelraum.os'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'de.bastelraum.os'
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    signingConfigs {
+        bastel {
+            storeFile file('bastelraum.keystore')
+            storePassword 'bastelraum'
+            keyAlias 'bastelraum'
+            keyPassword 'bastelraum'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.bastel
+        }
+        debug {
+            signingConfig signingConfigs.bastel
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}

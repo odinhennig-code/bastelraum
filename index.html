@@ -49,6 +49,7 @@ button{cursor:pointer}
 .flt{animation:flt 4s ease-in-out infinite}@keyframes flt{50%{transform:translateY(-6px)}}
 .shift{animation:shift 90s ease-in-out infinite alternate}@keyframes shift{to{transform:translate(40px,-24px)}}
 .secbar{transition:width 1s linear}
+.upspin{animation:upspin 1s linear infinite}@keyframes upspin{to{transform:rotate(360deg)}}
 .eqbar{width:5px;height:100%;border-radius:3px;background:rgba(255,255,255,.85);transform-origin:bottom;transform:scaleY(.15)}
 .playing .eqbar{animation:eq .9s ease-in-out infinite alternate}@keyframes eq{0%{transform:scaleY(.15)}100%{transform:scaleY(1)}}
 .playing .art{animation:art 3s ease-in-out infinite}@keyframes art{50%{transform:scale(1.03) rotate(-1deg)}}
@@ -242,6 +243,17 @@ input.field::placeholder{color:rgba(255,255,255,.5)}
     <div id="sheetBox" class="glass fade" style="width:620px;border-radius:34px;padding:28px 30px;display:flex;flex-direction:column;gap:18px;background:rgba(30,32,44,.75)"></div>
   </div>
 
+  <div id="updateOv" class="hidden" style="position:absolute;inset:0;background:rgba(4,5,10,.82);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);display:flex;align-items:center;justify-content:center;z-index:50">
+    <div class="glass fade" style="width:640px;border-radius:36px;padding:40px 44px;display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center;background:rgba(255,255,255,.06)">
+      <div class="upspin" style="width:84px;height:84px;border-radius:50%;border:5px solid rgba(255,255,255,.12);border-top-color:#FFB547;border-right-color:#FF7A2F"></div>
+      <span style="font-size:13px;letter-spacing:3px;color:#FFC56B;font-weight:600">ACHTUNG</span>
+      <span style="font-size:32px;font-weight:600;line-height:1.15">Automatisch wird ein Update geladen</span>
+      <span class="muted" style="font-size:17px">Das kann bis zu 2 Minuten dauern. Bitte das Tablet nicht ausschalten.</span>
+      <div style="width:100%;height:8px;border-radius:8px;background:rgba(255,255,255,.1);overflow:hidden"><div id="upBar" style="height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#FFC56B,#FF7A2F);box-shadow:0 0 14px #FF9A40;transition:width .5s linear"></div></div>
+      <span id="upTxt" class="muted num" style="font-size:14px">Version wird vorbereitet …</span>
+    </div>
+  </div>
+
   <div id="toast" class="glass hidden" style="position:absolute;top:28px;left:50%;margin-left:-200px;width:400px;text-align:center;padding:14px 20px;border-radius:999px;font-size:16px;background:rgba(30,30,40,.55)"></div>
 
   <!-- ================= NACHT 1 ================= -->
@@ -381,6 +393,7 @@ function show(v) {
   $('night2').classList.toggle('hidden', v !== 'night2');
   document.querySelectorAll('#dock button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
   tick();
+  try { if (window.BastelOS) BastelOS.setBrightness(v.startsWith('night') ? 0.15 : -1); } catch (e) {}
 }
 document.querySelectorAll('#dock button').forEach((b) => b.onclick = () => show(b.dataset.view));
 $('wake1').onclick = () => show('home');
@@ -717,6 +730,10 @@ function openPickMat(p) {
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 document.addEventListener('click', (ev) => {
   const btn = ev.target.closest('[data-mic]'); if (!btn) return;
+  if (window.BastelOS && BastelOS.startSpeech) {
+    window.__micBtn = btn; btn.classList.add('on'); sndTap();
+    BastelOS.startSpeech(btn.dataset.mic); return;
+  }
   if (!SR) { say('Spracheingabe geht in diesem Browser nicht – bitte Chrome nutzen'); return; }
   if (btn.rec) { btn.rec.stop(); return; }
   const input = $(btn.dataset.mic);
@@ -727,6 +744,58 @@ document.addEventListener('click', (ev) => {
   rec.onend = () => { btn.rec = null; btn.classList.remove('on'); };
   rec.start();
 });
+
+window.onNativeSpeech = (inputId, text, error) => {
+  const b = window.__micBtn; if (b) b.classList.remove('on');
+  if (error) { say(error); return; }
+  const el = $(inputId); if (el && text) el.value = text.charAt(0).toUpperCase() + text.slice(1);
+};
+
+/* =========================================================
+   RUHEMODUS NACH 5 MINUTEN OHNE BEDIENUNG
+   ========================================================= */
+const IDLE_MS = 5 * 60 * 1000;
+let lastTouch = Date.now();
+['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, () => { lastTouch = Date.now(); }, true));
+setInterval(() => {
+  const ringing = timers.some((t) => left(t) <= 0);
+  const busy = !$('sheet').classList.contains('hidden') || document.activeElement && document.activeElement.tagName === 'INPUT';
+  if (!ringing && !busy && !view.startsWith('night') && Date.now() - lastTouch > IDLE_MS) show('night2');
+}, 5000);
+
+/* =========================================================
+   LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
+   ========================================================= */
+const APP_VERSION = '1.4.0';
+let updating = false;
+async function checkUpdate() {
+  if (updating) return;
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const v = (await r.json()).version;
+    if (v && v !== APP_VERSION) startUpdate(v);
+  } catch (e) {}
+}
+function startUpdate(v) {
+  updating = true;
+  if (view.startsWith('night')) show('home');
+  $('updateOv').classList.remove('hidden');
+  $('upTxt').textContent = 'Version ' + APP_VERSION + ' → ' + v;
+  let pct = 0;
+  const iv = setInterval(() => {
+    pct = Math.min(100, pct + 4 + Math.random() * 6);
+    $('upBar').style.width = pct + '%';
+    if (pct >= 100) {
+      clearInterval(iv);
+      $('upTxt').textContent = 'Wird neu gestartet …';
+      setTimeout(() => location.replace(location.pathname + '?v=' + encodeURIComponent(v) + '&t=' + Date.now()), 700);
+    }
+  }, 500);
+}
+setInterval(checkUpdate, 60 * 1000);
+setTimeout(checkUpdate, 8000);
+window.bastelCheckUpdate = checkUpdate;
 
 /* =========================================================
    WETTER (Standort vom Tablet, Daten von Open-Meteo)
