@@ -655,6 +655,10 @@ function tryUrl() {
   player.play().catch(() => {});
 }
 player.addEventListener('playing', () => { setRState('LIVE'); renderRadio(); });
+player.addEventListener('pause', () => {
+  if (!playing) return;
+  setTimeout(() => { if (playing && player.paused && !L.open) player.play().catch(() => {}); }, 700);
+});
 player.addEventListener('waiting', () => { if (playing) setRState('LÄDT …'); });
 player.addEventListener('error', () => {
   if (!playing) return;
@@ -907,7 +911,8 @@ window.onWakeWord = (rest) => {
 };
 function luigiHeard(text, error) {
   const o = $('lPanel'); o.classList.remove('listen');
-  if (error || !text) { luigiReply('Ich hab dich nicht verstanden. Tipp mich an und versuch es nochmal.'); return; }
+  if (error === 'nichts gehört' || (!error && !text)) { $('lHeard').textContent = 'Ich hab nichts gehört.'; clearTimeout(L.closeT); L.closeT = setTimeout(luigiClose, 1600); return; }
+  if (error) { luigiReply('Das hab ich nicht verstanden. Tipp mich an und sag es nochmal.'); return; }
   $('lHeard').textContent = '„' + text.charAt(0).toUpperCase() + text.slice(1) + '“';
   o.classList.add('think');
   setTimeout(() => luigiReply(luigiDo(text)), 450);
@@ -921,6 +926,7 @@ function luigiReply(t) {
 }
 function luigiClose() {
   L.open = false; if (L.rec) try { L.rec.stop(); } catch (e) {}
+  if (playing && player.paused) setTimeout(() => { if (playing && player.paused) player.play().catch(() => {}); }, 600);
   $('lPanel').classList.remove('open', 'listen', 'think');
   $('lGlow').classList.remove('on'); $('lShade').classList.add('hidden');
   setTimeout(() => { if (!L.open) $('luigi').classList.remove('away'); }, 500);
@@ -1179,7 +1185,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '1.8.1';
+const APP_VERSION = '1.8.2';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;

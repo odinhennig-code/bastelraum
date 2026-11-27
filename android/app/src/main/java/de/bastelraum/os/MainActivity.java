@@ -44,7 +44,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final String URL = "https://odinhennig-code.github.io/bastelraum/";
-    private static final String VERSION = "1.6";
+    private static final String VERSION = "1.7";
 
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -471,7 +471,14 @@ public class MainActivity extends Activity {
             } });
         }
         @JavascriptInterface public void setRadio(final boolean on) {
-            ui.post(new Runnable() { @Override public void run() { radioOn = on; if (on) unmuteBeeps(); } });
+            ui.post(new Runnable() { @Override public void run() {
+                radioOn = on;
+                if (on) {
+                    unmuteBeeps();
+                    ui.removeCallbacks(wakeRunner);
+                    if ("wake".equals(mode) && speech != null) { try { speech.cancel(); } catch (Exception ignored) {} mode = "idle"; }
+                } else if (wakeEnabled) restartWake(1500);
+            } });
         }
         @JavascriptInterface public void setMotionWatch(final boolean on) {
             ui.post(new Runnable() { @Override public void run() { motionWanted = on; if (motion != null) motion.setEnabled(on); } });
@@ -511,14 +518,17 @@ public class MainActivity extends Activity {
             }
             @Override public void onPartialResults(Bundle p) {
                 if (!"cmd".equals(mode)) return;
+                cmdHeard = true;
                 ArrayList<String> m = p.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (m != null && !m.isEmpty()) js("window.onNativePartial && window.onNativePartial(" + q(speechTarget) + "," + q(m.get(0)) + ")");
             }
             @Override public void onError(int error) {
                 if ("cmd".equals(mode)) {
+                    boolean quiet = error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT;
+                    boolean glitch = error == SpeechRecognizer.ERROR_CLIENT || error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY;
+                    if ((glitch || (quiet && !cmdHeard)) && retryCmd()) return;   // Fehlstart: still weiter zuhören
                     mode = "idle";
-                    String msg = error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT
-                            ? "Nichts verstanden – nochmal versuchen" : "Spracheingabe gerade nicht möglich";
+                    String msg = quiet ? (cmdHeard ? "nicht verstanden" : "nichts gehört") : "Spracheingabe gerade nicht möglich";
                     js("window.onNativeSpeech && window.onNativeSpeech(" + q(speechTarget) + ",''," + q(msg) + ")");
                     restartWake(2500);
                 } else {
@@ -534,7 +544,7 @@ public class MainActivity extends Activity {
                 js("window.onNativeRms && window.onNativeRms(" + v + ")");
             }
             @Override public void onReadyForSpeech(Bundle p) {}
-            @Override public void onBeginningOfSpeech() {}
+            @Override public void onBeginningOfSpeech() { if ("cmd".equals(mode)) cmdHeard = true; }
             @Override public void onBufferReceived(byte[] b) {}
             @Override public void onEndOfSpeech() { muteFor(1200); }
             @Override public void onEvent(int t, Bundle p) {}
@@ -559,6 +569,9 @@ public class MainActivity extends Activity {
         in.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
         in.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, partial);
         in.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
+        in.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1800);
+        in.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1500);
+        in.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 2500);
         return in;
     }
 
@@ -573,7 +586,7 @@ public class MainActivity extends Activity {
     }
 
     private void startWake() {
-        if (!wakeEnabled || recOpen || "cmd".equals(mode) || !canListen()) return;
+        if (!wakeEnabled || recOpen || radioOn || "cmd".equals(mode) || !canListen()) return;
         if (tts != null && tts.isSpeaking()) { restartWake(800); return; }
         ensureRecognizer();
         muteBeeps();
@@ -590,10 +603,26 @@ public class MainActivity extends Activity {
         }
         ui.removeCallbacks(wakeRunner);
         ensureRecognizer();
+        boolean wasWaking = "wake".equals(mode);
         try { speech.cancel(); } catch (Exception ignored) {}
         muteBeeps();
-        mode = "cmd";
-        speech.startListening(recIntent(true));
+        mode = "cmd"; cmdHeard = false; cmdRetries = 0;
+        ui.postDelayed(new Runnable() { @Override public void run() { startCmd(); } }, wasWaking ? 350 : 60);
+    }
+
+    private boolean cmdHeard = false;
+    private int cmdRetries = 0;
+    private void startCmd() {
+        if (!"cmd".equals(mode)) return;
+        try { speech.startListening(recIntent(true)); }
+        catch (Exception e) { retryCmd(); }
+    }
+    private boolean retryCmd() {
+        if (cmdRetries >= 2) return false;
+        cmdRetries++;
+        try { speech.cancel(); } catch (Exception ignored) {}
+        ui.postDelayed(new Runnable() { @Override public void run() { startCmd(); } }, 400);
+        return true;
     }
 
     /* Die Erkennungs-Pieptöne stummschalten: kurz um Start und Ende der Erkennung herum.
