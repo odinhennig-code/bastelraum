@@ -70,11 +70,17 @@ html.lite .fade{animation-duration:.3s}
 #luigi:active .lhandle{filter:brightness(1.3)}
 #luigi.away{opacity:0;pointer-events:none}
 /* Luigi lebt: Formen */
+.lfx{display:flex;align-items:center;justify-content:flex-start;transform-origin:50% 80%}
+.lp{position:absolute;z-index:43;pointer-events:none;font-weight:700;font-size:15px;animation:lpuff 1.7s ease-out forwards;text-shadow:0 0 8px rgba(0,0,0,.5)}
+@keyframes lpuff{0%{opacity:0;transform:translate(0,4px) scale(.6)}15%{opacity:1;transform:translate(0,-4px) scale(1)}100%{opacity:0;transform:translate(var(--dx,6px),-34px) scale(1.1)}}
+#luigi.sleep .leye{transform:scaleY(.12)!important;animation:none}
+#luigi.run .lleg.a,#luigi.run .lleg.b,#luigi.run .larm.a,#luigi.run .larm.b{animation-duration:.18s!important}
+.lfly{position:absolute;z-index:40;width:6px;height:6px;border-radius:50%;background:#FFE08A;box-shadow:0 0 10px 3px rgba(255,220,120,.7);pointer-events:none}
 .leyes{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);display:none;gap:4px}
 .leyes i{display:block;width:3px;height:4px;border-radius:2px;background:#fff;animation:lblink 4.5s infinite}
 @keyframes lblink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
 #luigi[data-shape=orb],#luigi[data-shape=walker],#luigi[data-shape=line]{width:auto;height:auto}
-#luigi[data-shape=orb] .lhandle{width:22px;height:22px;border-radius:50%;animation:lflow 4s linear infinite,lbob 2.4s ease-in-out infinite;background-size:300% 300%}
+#luigi[data-shape=orb] .lhandle{width:18px;height:18px;border-radius:50%;animation:lflow 4s linear infinite,lbob 2.4s ease-in-out infinite;background-size:300% 300%}
 #luigi[data-shape=orb] .leyes{display:flex}
 @keyframes lbob{50%{transform:translateY(-6px)}}
 #luigi[data-shape=line] .lhandle{width:var(--w,40px);height:4px;border-radius:4px;animation:lflow 3s linear infinite;background:linear-gradient(90deg,#FFB547,#FF5FA2,#8B6CFF,#4FA3FF,#FFB547);background-size:300% 100%}
@@ -320,7 +326,7 @@ input.field::placeholder{color:rgba(255,255,255,.5)}
   <!-- ================= LUIGI ================= -->
   <div id="lShade" class="hidden"></div>
   <div id="lGlow"></div>
-  <button id="luigi" data-shape="edge" aria-label="Luigi – Sprachassistent"><span class="lhandle"><span class="leyes"><i></i><i></i></span></span><svg class="lman" width="36" height="48" viewBox="0 0 40 54" aria-hidden="true"><defs><linearGradient id="lmg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC56B"/><stop offset=".35" stop-color="#FF6FA8"/><stop offset=".7" stop-color="#8B6CFF"/><stop offset="1" stop-color="#4FA3FF"/></linearGradient><radialGradient id="lms" cx=".35" cy=".25" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><rect class="lleg a" x="12.5" y="38" width="5.5" height="13" rx="2.75" fill="#7C83FF"/><rect class="lleg b" x="22" y="38" width="5.5" height="13" rx="2.75" fill="#5B8DFF"/><rect class="larm a" x="2" y="22" width="5" height="12" rx="2.5" fill="#FF8FB8"/><rect class="larm b" x="33" y="22" width="5" height="12" rx="2.5" fill="#9C7BFF"/><g class="lbody"><ellipse cx="20" cy="24" rx="15.5" ry="16.5" fill="url(#lmg)"/><ellipse cx="20" cy="24" rx="15.5" ry="16.5" fill="url(#lms)"/><ellipse class="leye" cx="15" cy="22" rx="2.4" ry="3.3" fill="#fff"/><ellipse class="leye" cx="25" cy="22" rx="2.4" ry="3.3" fill="#fff"/><circle cx="15.6" cy="22.8" r="1.2" fill="#2A1B4A"/><circle cx="25.6" cy="22.8" r="1.2" fill="#2A1B4A"/><ellipse cx="11.5" cy="28" rx="2.2" ry="1.3" fill="#FF5FA2" opacity=".55"/><ellipse cx="28.5" cy="28" rx="2.2" ry="1.3" fill="#FF5FA2" opacity=".55"/><path d="M17.5 29.5q2.5 2 5 0" stroke="#2A1B4A" stroke-width="1.3" fill="none" stroke-linecap="round"/></g></svg></button>
+  <button id="luigi" data-shape="edge" aria-label="Luigi – Sprachassistent"><span class="lfx"><span class="lhandle"><span class="leyes"><i></i><i></i></span></span><svg class="lman" width="36" height="48" viewBox="0 0 40 54" aria-hidden="true"><defs><linearGradient id="lmg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC56B"/><stop offset=".35" stop-color="#FF6FA8"/><stop offset=".7" stop-color="#8B6CFF"/><stop offset="1" stop-color="#4FA3FF"/></linearGradient><radialGradient id="lms" cx=".35" cy=".25" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><rect class="lleg a" x="12.5" y="38" width="5.5" height="13" rx="2.75" fill="#7C83FF"/><rect class="lleg b" x="22" y="38" width="5.5" height="13" rx="2.75" fill="#5B8DFF"/><rect class="larm a" x="2" y="22" width="5" height="12" rx="2.5" fill="#FF8FB8"/><rect class="larm b" x="33" y="22" width="5" height="12" rx="2.5" fill="#9C7BFF"/><g class="lbody"><ellipse cx="20" cy="24" rx="15.5" ry="16.5" fill="url(#lmg)"/><ellipse cx="20" cy="24" rx="15.5" ry="16.5" fill="url(#lms)"/><ellipse class="leye" cx="15" cy="22" rx="2.4" ry="3.3" fill="#fff"/><ellipse class="leye" cx="25" cy="22" rx="2.4" ry="3.3" fill="#fff"/><circle cx="15.6" cy="22.8" r="1.2" fill="#2A1B4A"/><circle cx="25.6" cy="22.8" r="1.2" fill="#2A1B4A"/><ellipse cx="11.5" cy="28" rx="2.2" ry="1.3" fill="#FF5FA2" opacity=".55"/><ellipse cx="28.5" cy="28" rx="2.2" ry="1.3" fill="#FF5FA2" opacity=".55"/><path d="M17.5 29.5q2.5 2 5 0" stroke="#2A1B4A" stroke-width="1.3" fill="none" stroke-linecap="round"/></g></svg></span></button>
   <div id="lPanel" class="glass" aria-live="polite">
     <div class="lhead"><span class="ldots"><i></i><i></i><i></i><i></i></span><span>Luigi</span></div>
     <span id="lHeard"></span>
@@ -964,7 +970,12 @@ function cr(p0, p1, p2, p3, t) {
 function glide(pts, speed, opts) {
   opts = opts || {};
   const tok = ++rafTok;
-  const P = [[B.x, B.y]].concat(pts);
+  const P0 = [[B.x, B.y]].concat(pts), P = [P0[0]];
+  for (let i = 1; i < P0.length; i++) {
+    const a = P0[i - 1], b = P0[i], d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.floor(d / 50);
+    for (let k = 1; k < n; k++) P.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]);
+    P.push(b);
+  }
   const S = [];
   for (let i = 0; i < P.length - 1; i++) {
     const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || P[i + 1];
@@ -989,7 +1000,7 @@ function glide(pts, speed, opts) {
       tilt += ((Math.max(-12, Math.min(12, vx * 2.2))) - tilt) * .15;
       const sp = Math.min(1, Math.abs(vx) / 9);
       lbtn.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) rotate(' + (opts.noTilt ? 0 : tilt).toFixed(2) + 'deg)'
-        + (opts.noSquash ? '' : ' scale(' + (1 + sp * .14).toFixed(3) + ',' + (1 - sp * .09).toFixed(3) + ')');
+        + (opts.noSquash ? '' : ' scale(' + (1 + sp * .1).toFixed(3) + ',' + (1 - sp * .08).toFixed(3) + ')');
       B.x = x; B.y = y;
       if (u < 1) requestAnimationFrame(frame);
       else { lbtn.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; res(true); }
@@ -1002,74 +1013,246 @@ function buddyHome(fast) {
   if (Math.abs(B.x) < 2 && Math.abs(B.y - 330) < 2) { shape('edge'); }
   else {
     if (lbtn.dataset.shape !== 'edge') shape('orb');
-    const pts = fast ? [[0, 330]] : (B.y > 600 ? [[14, 760], [0, 330]] : B.y < 130 ? [[14, 140], [0, 330]] : [[0, 330]]);
-    glide(pts, fast ? 1600 : 300).then((ok) => { if (ok && !B.away) shape('edge'); });
+    const pts = leaveDockGap().concat(B.x < 30 ? [] : ringRoute(B.x, B.y, 14, 330)).concat([[0, 330]]);
+    glide(pts, fast ? 1700 : 300).then((ok) => { if (ok && !B.away) shape('edge'); });
   }
   B.nextAt = Date.now() + rnd(10000, 16000);
   return was;
 }
 const alive = (g) => g === B.gen && !L.open && view === 'home';
 
-/* Freie Wege: linker Rand (x 14), Streifen unter der Kopfzeile (y 112), Boden (y 782) */
-async function path(g, pts, speed) { const ok = await glide(pts, speed || 300); return ok && alive(g); }
-async function toHeader(g, x, y) { shape('orb'); return path(g, [[14, 112], [x, 112], [x, y]]); }
-async function toFloor(g, x) { shape('orb'); return path(g, [[14, 778], [x, 778]]); }
-async function goHome(g) {
-  shape('orb');
-  const onFloor = B.y > 600, inHead = B.y < 130;
-  if (onFloor) await path(g, [[B.x, 778], [40, 772]]);
-  else if (inHead) await path(g, [[B.x, 112], [40, 118]]);
-  if (alive(g)) buddyHome(false);
+/* =========================================================
+   LUIGIS WELT
+   Er bewegt sich nur auf freien Wegen um die Kacheln herum:
+   linker Rand, Streifen unter der Kopfzeile, rechter Rand, Boden.
+   ========================================================= */
+const RING = { x0: 14, x1: 1250, y0: 111, y1: 778 };
+const fx = document.querySelector('#luigi .lfx');
+function ringParam(x, y) {                 // Punkt -> Position auf dem Rundweg (im Uhrzeigersinn ab oben links)
+  const W = RING.x1 - RING.x0, H = RING.y1 - RING.y0;
+  const dTop = Math.abs(y - RING.y0), dBot = Math.abs(y - RING.y1), dL = Math.abs(x - RING.x0), dR = Math.abs(x - RING.x1);
+  const m = Math.min(dTop, dBot, dL, dR);
+  const cx = Math.max(RING.x0, Math.min(RING.x1, x)), cy = Math.max(RING.y0, Math.min(RING.y1, y));
+  if (m === dTop) return cx - RING.x0;
+  if (m === dR) return W + (cy - RING.y0);
+  if (m === dBot) return W + H + (RING.x1 - cx);
+  return 2 * W + H + (RING.y1 - cy);
 }
-async function walkTo(g, x, y) {
-  shape('walker'); lbtn.classList.toggle('flip', x < B.x); await wait(250);
-  lbtn.classList.add('walking'); await glide([[x, y]], 70, { linear: true, noTilt: true, noSquash: true }); lbtn.classList.remove('walking');
+function ringPoint(t) {
+  const W = RING.x1 - RING.x0, H = RING.y1 - RING.y0, P = 2 * (W + H);
+  t = ((t % P) + P) % P;
+  if (t <= W) return [RING.x0 + t, RING.y0];
+  if (t <= W + H) return [RING.x1, RING.y0 + (t - W)];
+  if (t <= 2 * W + H) return [RING.x1 - (t - W - H), RING.y1];
+  return [RING.x0, RING.y1 - (t - 2 * W - H)];
+}
+function ringRoute(x0, y0, x1, y1) {       // Wegpunkte über den Rundweg, kürzere Richtung
+  const W = RING.x1 - RING.x0, H = RING.y1 - RING.y0, P = 2 * (W + H);
+  const a = ringParam(x0, y0), b = ringParam(x1, y1);
+  let d = b - a; if (d > P / 2) d -= P; if (d < -P / 2) d += P;
+  const corners = [0, W, W + H, 2 * W + H].map((c) => c);
+  const pts = [ringPoint(a)];
+  const step = d > 0 ? 1 : -1;
+  const passed = [];
+  for (const c of corners) for (const k of [-1, 0, 1]) {
+    const cc = c + k * P;
+    if ((step > 0 && cc > a && cc < a + d) || (step < 0 && cc < a && cc > a + d)) passed.push(cc);
+  }
+  passed.sort((p, q) => step * (p - q));
+  passed.forEach((c) => pts.push(ringPoint(c)));
+  pts.push(ringPoint(a + d));
+  return pts;
+}
+async function goTo(g, x, y, speed) {      // als Kugel über den Rundweg zu (x, y)
+  shape('orb');
+  const pre = leaveDockGap(); if (pre.length && !await glide(pre, 200)) return false;
+  const pts = ringRoute(B.x, B.y, x, y).concat([[x, y]]);
+  const ok = await glide(pts, speed || rnd(240, 330));
+  return ok && alive(g);
+}
+async function linger(g, ms) {             // lebendig warten: blinzeln, umschauen, wippen
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    await wait(rnd(500, 1300)); if (!alive(g)) return false;
+    const r = Math.random();
+    if (lbtn.dataset.shape === 'walker') {
+      if (r < .25) lbtn.classList.toggle('flip');
+      else if (r < .35) await hop(g, 0, 10);
+    } else if (r < .2) fx.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.15,.88)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
+  }
   return alive(g);
 }
-async function bFloor(g) {            // läuft unten links am Boden entlang
-  if (!await toFloor(g, 70)) return;
-  if (!await path(g, [[70, 744]], 120)) return;
-  if (!await walkTo(g, rnd(250, 430), 744)) return;
-  lbtn.classList.add('wave'); await wait(1800); lbtn.classList.remove('wave'); if (!alive(g)) return;
-  await walkTo(g, 70, 744);
+function puff(text, color, dx) {
+  const el = document.createElement('span');
+  el.className = 'lp'; el.textContent = text; el.style.color = color || '#fff';
+  el.style.left = (B.x + 14 + rnd(-6, 6)) + 'px'; el.style.top = (B.y - 8) + 'px';
+  el.style.setProperty('--dx', (dx != null ? dx : rnd(-10, 14)) + 'px');
+  $('stage').appendChild(el); setTimeout(() => el.remove(), 1800);
 }
-async function bHeader(g) {           // spaziert oben durch die freie Fläche neben „Hallo Mama“
-  const r = stageRect(document.querySelector('header span[style*="34px"]'));
-  const x0 = r.x + r.w + 30, y = 52;
-  if (!await toHeader(g, x0, y)) return;
-  if (!await walkTo(g, x0 + rnd(120, 260), y)) return;
-  await wait(rnd(1500, 2500)); if (!alive(g)) return;
-  await walkTo(g, x0, y);
+async function puffs(g, text, color, n, gap) { for (let i = 0; i < n; i++) { puff(text, color); await wait(gap || 500); if (!alive(g)) return false; } return true; }
+async function hop(g, dx, h) {
+  const x = B.x, y = B.y;
+  return (await glide([[x + dx / 2, y - (h || 26)], [x + dx, y]], 160 + Math.abs(dx), { noSquash: true })) && alive(g);
 }
-async function bClock(g) {            // setzt sich oben auf die Uhr
-  const r = stageRect($('clkH').parentElement);
-  if (!await toHeader(g, r.x + r.w + 8, 112)) return;
-  if (!await path(g, [[r.x + r.w / 2 - 18, r.y - 42]], 220)) return;
-  shape('walker'); lbtn.classList.add('sit'); await wait(rnd(4500, 6500)); if (!alive(g)) return;
-  lbtn.classList.remove('sit'); lbtn.classList.add('wave'); await wait(1400); lbtn.classList.remove('wave');
+async function walk(g, x, speed, cls) {
+  shape('walker'); if (Math.abs(x - B.x) < 4) return alive(g);
+  lbtn.classList.toggle('flip', x < B.x); if (cls) lbtn.classList.add(cls);
+  await wait(180); lbtn.classList.add('walking');
+  const ok = await glide([[x, B.y]], speed || 70, { linear: true, noTilt: true, noSquash: true });
+  lbtn.classList.remove('walking', 'run'); return ok && alive(g);
 }
-async function bStretch(g) {          // macht sich unter einer Überschrift breit
-  const targets = [document.querySelector('header span[style*="34px"]'), $('date')].filter(Boolean);
-  const r = stageRect(targets[Math.floor(Math.random() * targets.length)]);
-  if (!await toHeader(g, r.x, 112)) return;
-  if (!await path(g, [[r.x, r.y + r.h + 3]], 200)) return;
+async function spin(g) { fx.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }], { duration: 700, easing: 'cubic-bezier(.4,0,.2,1)' }); await wait(720); return alive(g); }
+async function wave(g, ms) { shape('walker'); lbtn.classList.add('wave'); const ok = await linger(g, ms || 1600); lbtn.classList.remove('wave'); return ok; }
+async function sitFor(g, ms) { shape('walker'); lbtn.classList.add('sit'); const ok = await linger(g, ms); lbtn.classList.remove('sit'); return ok; }
+async function sleepFor(g, ms) {
+  shape('walker'); lbtn.classList.add('sit', 'sleep');
+  const end = Date.now() + ms; let ok = true;
+  while (ok && Date.now() < end) ok = await puffs(g, Math.random() < .5 ? 'z' : 'Z', '#B9C6FF', 1, rnd(800, 1300));
+  lbtn.classList.remove('sit', 'sleep'); return ok;
+}
+async function dance(g, ms) {
+  shape('walker'); const end = Date.now() + ms;
+  while (Date.now() < end) {
+    lbtn.classList.toggle('flip'); puff('♪', ['#FFC56B', '#FF6FA8', '#8B6CFF', '#4FA3FF'][Math.floor(rnd(0, 4))]);
+    if (!await hop(g, 0, rnd(8, 18))) return false;
+    if (Math.random() < .25 && !await spin(g)) return false;
+  }
+  return alive(g);
+}
+async function lineUnder(g, el) {
+  const r = stageRect(el);
+  if (!await goTo(g, r.x, r.y + r.h + 3, 260)) return false;
   lbtn.style.setProperty('--w', '22px'); shape('line'); await wait(60);
-  lbtn.style.setProperty('--w', Math.round(r.w) + 'px'); await wait(rnd(3500, 5000)); if (!alive(g)) return;
-  lbtn.style.setProperty('--w', '22px'); await wait(500); shape('orb');
+  lbtn.style.setProperty('--w', Math.round(r.w) + 'px');
+  const ok = await linger(g, rnd(3000, 4500));
+  lbtn.style.setProperty('--w', '22px'); await wait(450); shape('orb'); return ok;
 }
-async function bDock(g) {             // läuft oben über die Knopfleiste
-  const r = stageRect($('dock'));
-  shape('orb'); if (!await path(g, [[14, 778], [r.x - 30, 778], [r.x + 14, r.y - 46]])) return;
-  if (!await walkTo(g, r.x + r.w - 50, r.y - 46)) return;
-  lbtn.classList.add('wave'); await wait(1500); lbtn.classList.remove('wave'); if (!alive(g)) return;
-  await walkTo(g, r.x + 14, r.y - 46); if (!alive(g)) return;
-  shape('orb'); await path(g, [[r.x - 30, 778]], 200);
+async function chaseFirefly(g) {
+  const f = document.createElement('span'); f.className = 'lfly'; $('stage').appendChild(f);
+  let fx0 = rnd(80, 420), fy0 = 760;
+  const move = (x, y) => { f.style.transform = 'translate(' + x + 'px,' + y + 'px)'; };
+  move(fx0, fy0);
+  try {
+    for (let i = 0; i < 5; i++) {
+      const nx = rnd(70, 430), ny = rnd(735, 770);
+      f.animate([{ transform: 'translate(' + fx0 + 'px,' + fy0 + 'px)' }, { transform: 'translate(' + nx + 'px,' + ny + 'px)' }], { duration: 900, easing: 'ease-in-out', fill: 'forwards' });
+      fx0 = nx; fy0 = ny; await wait(500);
+      if (!await walk(g, nx - 10, 150, 'run')) return false;
+      if (Math.random() < .5) puff('✦', '#FFE08A');
+    }
+    puff('♥', '#FF6FA8'); return await hop(g, 0, 22);
+  } finally { f.remove(); }
 }
-const BEHAVIORS = [bFloor, bHeader, bClock, bStretch, bDock];
+
+/* Orte */
+const SPOT = {
+  floorL: () => [rnd(60, 430), 744],
+  floorR: () => [rnd(850, 1215), 744],
+  dock: () => { const r = stageRect($('dock')); return [rnd(r.x + 6, r.x + r.w - 44), r.y - 46]; },
+  dockRect: () => stageRect($('dock')),
+  clock: () => { const r = stageRect($('clkH').parentElement); return [r.x + rnd(0, r.w - 36), r.y - 44]; },
+  clockRect: () => stageRect($('clkH').parentElement),
+  greet: () => stageRect(document.querySelector('header span[style*="34px"]')),
+  head: () => { const r = stageRect(document.querySelector('header span[style*="34px"]')); return [rnd(r.x + r.w + 30, r.x + r.w + 280), 52]; },
+  top: () => [rnd(60, 1200), 6],
+};
+const xy = (p) => p;
+async function walkerAt(g, p) { if (!await goTo(g, p[0], p[1])) return false; shape('walker'); return true; }
+
+/* Mehr als 50 Sachen, die Luigi macht */
+const ACTS = [
+  // --- Boden links ---
+  ['Spaziergang links', 3, async (g) => { const p = SPOT.floorL(); if (!await walkerAt(g, p)) return; await walk(g, rnd(60, 430)); await linger(g, 1500); }],
+  ['Winken links', 2, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await wave(g, 2200); }],
+  ['Joggen links', 2, async (g) => { if (!await walkerAt(g, [70, 744])) return; await walk(g, 420, 160, 'run'); await walk(g, 80, 160, 'run'); }],
+  ['Schleichen', 1, async (g) => { if (!await walkerAt(g, [420, 744])) return; await walk(g, 90, 28); puff('…', '#ccc'); }],
+  ['Hüpfen links', 2, async (g) => { if (!await walkerAt(g, [80, 744])) return; for (let i = 0; i < 5; i++) if (!await hop(g, 60, 28)) return; }],
+  ['Glühwürmchen jagen', 2, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await chaseFirefly(g); }],
+  ['Nickerchen links', 2, async (g) => { if (!await walkerAt(g, [70, 744])) return; await sleepFor(g, rnd(6000, 9000)); puff('!', '#FFC56B'); await hop(g, 0, 20); }],
+  ['Sitzen links', 2, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await sitFor(g, rnd(4000, 6000)); }],
+  ['Pirouette', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; for (let i = 0; i < 3; i++) if (!await spin(g)) return; puff('✦', '#FFE08A'); }],
+  ['Stolpern', 1, async (g) => { if (!await walkerAt(g, [90, 744])) return; await walk(g, 260, 90, 'run'); fx.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(80deg)' }, { transform: 'rotate(80deg)' }, { transform: 'rotate(0)' }], { duration: 1600, easing: 'ease-in-out' }); puff('!', '#FFC56B'); await linger(g, 1800); }],
+  ['Niesen', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await linger(g, 700); fx.animate([{ transform: 'scale(1)' }, { transform: 'scale(.9,1.1)' }, { transform: 'scale(1.2,.8)' }, { transform: 'scale(1)' }], { duration: 600 }); puff('Hatschi!', '#fff', 20); await linger(g, 1200); }],
+  ['Nachdenken', 2, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await puffs(g, '?', '#8BC1FF', 3, 700); await linger(g, 1200); puff('!', '#FFC56B'); }],
+  ['Gähnen', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; fx.animate([{ transform: 'scale(1)' }, { transform: 'scale(.92,1.12)' }, { transform: 'scale(1)' }], { duration: 1400 }); puff('…', '#ccc'); await linger(g, 2000); }],
+  ['Hin und her laufen', 2, async (g) => { if (!await walkerAt(g, [100, 744])) return; for (let i = 0; i < 3; i++) { if (!await walk(g, 380)) return; if (!await walk(g, 100)) return; } }],
+  // --- Boden rechts ---
+  ['Spaziergang rechts', 3, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await walk(g, rnd(850, 1215)); await linger(g, 1500); }],
+  ['Winken rechts', 2, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await wave(g, 2200); }],
+  ['Joggen rechts', 2, async (g) => { if (!await walkerAt(g, [850, 744])) return; await walk(g, 1210, 160, 'run'); await walk(g, 860, 160, 'run'); }],
+  ['Nickerchen rechts', 2, async (g) => { if (!await walkerAt(g, [1200, 744])) return; await sleepFor(g, rnd(6000, 9000)); }],
+  ['Sitzen rechts', 2, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await sitFor(g, rnd(4000, 6000)); }],
+  ['Hüpfen rechts', 2, async (g) => { if (!await walkerAt(g, [1200, 744])) return; for (let i = 0; i < 5; i++) if (!await hop(g, -60, 28)) return; }],
+  ['Herz schicken', 2, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await puffs(g, '♥', '#FF6FA8', 4, 450); await wave(g, 1200); }],
+  ['Glühwürmchen rechts', 1, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; puff('✦', '#FFE08A'); await hop(g, 0, 30); await walk(g, rnd(850, 1215), 150, 'run'); puff('✦', '#FFE08A'); }],
+  // --- Knopfleiste (als kleine Kugel im Spalt darüber) ---
+  ['Über die Leiste rollen', 3, async (g) => { const r = SPOT.dockRect(), y = r.y - 20; if (!await goTo(g, r.x - 24, 778)) return; if (!await glide([[r.x - 6, y], [r.x + 10, y]], 160)) return; fx.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(720deg)' }], { duration: 2600 }); await glide([[r.x + r.w - 30, y]], 120, { linear: true }); await linger(g, 1000); }],
+  ['Auf der Leiste ausruhen', 2, async (g) => { const r = SPOT.dockRect(), y = r.y - 20; if (!await goTo(g, r.x - 24, 778)) return; if (!await glide([[r.x - 6, y], [r.x + rnd(20, r.w - 40), y]], 160)) return; await linger(g, rnd(3500, 5500)); }],
+  ['Auf der Leiste schlafen', 1, async (g) => { const r = SPOT.dockRect(), y = r.y - 20; if (!await goTo(g, r.x - 24, 778)) return; if (!await glide([[r.x - 6, y], [r.x + rnd(20, r.w - 40), y]], 160)) return; await puffs(g, 'z', '#B9C6FF', 6, 900); }],
+  ['Auf der Leiste hüpfen', 1, async (g) => { const r = SPOT.dockRect(), y = r.y - 20; if (!await goTo(g, r.x - 24, 778)) return; if (!await glide([[r.x - 6, y], [r.x + 10, y]], 160)) return; for (let i = 0; i < 5; i++) if (!await glide([[B.x + (r.w - 40) / 10, y - 4], [B.x + (r.w - 40) / 5, y]], 120, { noSquash: true })) return; }],
+  ['Unter der Leiste durch', 2, async (g) => { const r = SPOT.dockRect(); if (!await goTo(g, r.x - 30, 778)) return; await glide([[r.x + r.w + 30, 778]], 200); puff('✦', '#FFE08A'); }],
+  // --- Uhr ---
+  ['Auf der Uhr sitzen', 3, async (g) => { if (!await walkerAt(g, SPOT.clock())) return; await sitFor(g, rnd(4500, 7000)); }],
+  ['Über die Uhr laufen', 2, async (g) => { const r = SPOT.clockRect(); if (!await walkerAt(g, [r.x, r.y - 44])) return; await walk(g, r.x + r.w - 36); await linger(g, 1500); }],
+  ['Auf der Uhr schlafen', 1, async (g) => { if (!await walkerAt(g, SPOT.clock())) return; await sleepFor(g, rnd(6000, 9000)); }],
+  ['Uhr anschauen', 2, async (g) => { if (!await walkerAt(g, SPOT.clock())) return; await puffs(g, 'tick tack', '#FFC56B', 1); await linger(g, 2500); }],
+  ['Strich unter der Uhr', 1, async (g) => { await lineUnder(g, $('clkH').parentElement); }],
+  // --- Begrüßung ---
+  ['Auf „Hallo Mama“ sitzen', 3, async (g) => { const r = SPOT.greet(); if (!await walkerAt(g, [r.x + rnd(10, r.w - 40), r.y - 44])) return; await sitFor(g, rnd(4000, 6000)); }],
+  ['Über „Hallo Mama“ laufen', 2, async (g) => { const r = SPOT.greet(); if (!await walkerAt(g, [r.x, r.y - 44])) return; await walk(g, r.x + r.w - 36); await wave(g, 1500); }],
+  ['Mama grüßen', 3, async (g) => { const r = SPOT.greet(); if (!await walkerAt(g, [r.x + r.w + 16, r.y + 2])) return; await puffs(g, '♥', '#FF6FA8', 3, 400); await wave(g, 2000); }],
+  ['Strich unter „Hallo Mama“', 2, async (g) => { await lineUnder(g, SPOT.greet().el || document.querySelector('header span[style*="34px"]')); }],
+  ['Strich unter dem Datum', 2, async (g) => { await lineUnder(g, $('date')); }],
+  ['Kopfzeile erkunden', 2, async (g) => { if (!await walkerAt(g, SPOT.head())) return; await walk(g, SPOT.head()[0]); await linger(g, 1800); }],
+  ['Kopfzeile tanzen', 1, async (g) => { if (!await walkerAt(g, SPOT.head())) return; await dance(g, 3500); }],
+  // --- Schweben und Ränder ---
+  ['Schweben', 3, async (g) => { for (let i = 0; i < 3; i++) { const p = ringPoint(rnd(0, 4000)); if (!await goTo(g, p[0], p[1], rnd(180, 260))) return; if (!await linger(g, rnd(1200, 2500))) return; } }],
+  ['Runde drehen', 2, async (g) => { if (!await goTo(g, 14, 118)) return; await glide(ringRoute(14, 118, 1250, 778).concat(ringRoute(1250, 778, 14, 118).slice(1)), 380); }],
+  ['Oben entlangflitzen', 1, async (g) => { if (!await goTo(g, 14, 118)) return; await glide([[60, 6], [1220, 6], [1250, 118]], 520); }],
+  ['Links reingucken', 2, async (g) => { if (!await goTo(g, 14, rnd(200, 600))) return; await glide([[-12, B.y]], 90); await linger(g, 2500); puff('?', '#8BC1FF'); }],
+  ['Rechts reingucken', 2, async (g) => { if (!await goTo(g, 1250, rnd(200, 600))) return; await glide([[1266, B.y]], 90); await linger(g, 2500); }],
+  ['Von unten gucken', 1, async (g) => { if (!await goTo(g, rnd(60, 430), 778)) return; await glide([[B.x, 790]], 60); await linger(g, 2500); }],
+  ['Rechten Rand hochklettern', 2, async (g) => { if (!await goTo(g, 1250, 760)) return; await glide([[1252, 140]], 90, { linear: true }); puff('✦', '#FFE08A'); }],
+  ['Linken Rand runterrutschen', 1, async (g) => { if (!await goTo(g, 14, 130)) return; await glide([[14, 760]], 520); puff('Wiii!', '#fff'); }],
+  ['Sternschnuppe', 1, async (g) => { if (!await goTo(g, 14, 118)) return; for (let i = 0; i < 6; i++) { puff('✦', '#FFE08A', -20); await wait(90); } await glide([[1250, 118]], 900); }],
+  ['Kreise ziehen', 1, async (g) => { if (!await goTo(g, 600, 118)) return; await glide([[700, 112], [760, 118], [700, 124], [640, 118], [700, 112]], 140); }],
+  ['Aufpusten', 1, async (g) => { const p = ringPoint(rnd(0, 4000)); if (!await goTo(g, p[0], p[1])) return; fx.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.8)' }, { transform: 'scale(1)' }], { duration: 1400, easing: 'cubic-bezier(.3,1.5,.5,1)' }); await linger(g, 1600); }],
+  // --- Je nach Situation ---
+  ['Zur Musik tanzen', 0, async (g) => { if (!await walkerAt(g, Math.random() < .5 ? SPOT.floorL() : SPOT.floorR())) return; await dance(g, rnd(5000, 8000)); }, () => playing ? 8 : 0],
+  ['Musik-Noten', 0, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await puffs(g, '♫', '#8B6CFF', 5, 500); await dance(g, 2500); }, () => playing ? 4 : 0],
+  ['Timer beobachten', 0, async (g) => { if (!await walkerAt(g, SPOT.clock())) return; await puffs(g, 'tick tack', '#FFC56B', 2, 800); await sitFor(g, 3000); }, () => timers.length ? 3 : 0],
+  ['Morgendehnen', 0, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; fx.animate([{ transform: 'scale(1)' }, { transform: 'scale(.85,1.25)' }, { transform: 'scale(1)' }], { duration: 1600, easing: 'ease-in-out' }); puff('Guten Morgen!', '#FFC56B', 20); await wave(g, 1500); }, () => { const h = new Date().getHours(); return h >= 6 && h < 11 ? 4 : 0; }],
+  ['Abends müde', 0, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; puff('…', '#ccc'); await sleepFor(g, rnd(8000, 12000)); }, () => { const h = new Date().getHours(); return h >= 20 || h < 6 ? 6 : 0; }],
+  ['Kaffeepause', 0, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; puff('Pause!', '#C9A27A', 20); await sitFor(g, 4000); }, () => { const h = new Date().getHours(); return h >= 14 && h < 17 ? 2 : 0; }],
+];
+function pickAct() {
+  const list = ACTS.map((a) => [a, a[3] ? a[3]() : a[1]]).filter((x) => x[1] > 0);
+  let sum = list.reduce((s0, x) => s0 + x[1], 0), r = Math.random() * sum;
+  for (const [a, w] of list) { r -= w; if (r <= 0) return a; }
+  return list[0][0];
+}
+function leaveDockGap() {           // aus dem Spalt über der Leiste seitlich raus auf den Boden
+  const r = SPOT.dockRect();
+  if (B.y > r.y - 40 && B.y < r.y && B.x > r.x - 40 && B.x < r.x + r.w + 10) return [[B.x < r.x + r.w / 2 ? r.x - 6 : r.x + r.w - 10, B.y], [B.x < r.x + r.w / 2 ? r.x - 24 : r.x + r.w + 14, 778]];
+  return [];
+}
+async function goHome(g) {
+  if (!alive(g)) return;
+  const pre = leaveDockGap(); if (pre.length && !await glide(pre, 200)) return;
+  const pts = ringRoute(B.x, B.y, 14, 330).concat([[0, 330]]);
+  shape('orb');
+  const ok = await glide(pts, 300);
+  if (ok && alive(g)) buddyHome(false);
+}
 async function buddyTrip() {
   const g = ++B.gen; B.away = true;
-  await BEHAVIORS[Math.floor(Math.random() * BEHAVIORS.length)](g);
-  if (alive(g)) await goHome(g);
+  const n = Math.random() < .35 ? 2 : 1;
+  for (let i = 0; i < n; i++) {
+    const a = pickAct(); B.act = a[0];
+    try { await a[2](g); } catch (e) {}
+    if (!alive(g)) return;
+  }
+  await goHome(g);
 }
 setInterval(() => {
   if (L.open) return;
@@ -1233,7 +1416,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '1.8.3';
+const APP_VERSION = '1.9.1';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
