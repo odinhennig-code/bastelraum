@@ -56,6 +56,9 @@ html.lite .arc{filter:none}
 html.lite #updateOv{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(4,5,10,.95)}
 html.lite .fade{animation-duration:.3s}
 .orb,.aur{will-change:transform}
+#dock button.arm{background:rgba(255,190,110,.35);animation:pulse 1s ease-in-out infinite}
+.setTile{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:18px;border-radius:22px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);text-align:left;font-size:17px;font-weight:500}
+.setTile:active{transform:scale(.96)}
 .upspin{animation:upspin 1s linear infinite}@keyframes upspin{to{transform:rotate(360deg)}}
 .eqbar{width:5px;height:100%;border-radius:3px;background:rgba(255,255,255,.85);transform-origin:bottom;transform:scaleY(.15)}
 .playing .eqbar{animation:eq .9s ease-in-out infinite alternate}@keyframes eq{0%{transform:scaleY(.15)}100%{transform:scaleY(1)}}
@@ -93,14 +96,18 @@ input.field::placeholder{color:rgba(255,255,255,.5)}
 
   <div id="wrap">
     <header>
-      <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:center;gap:26px">
         <span class="num" style="font-size:84px;font-weight:500;letter-spacing:-2px;line-height:.9"><span id="clkH">00</span><span class="colon">:</span><span id="clkM">00</span></span>
-        <span id="date" style="font-size:18px" class="muted"></span>
+        <span style="width:1px;height:64px;background:rgba(255,255,255,.18)"></span>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span style="font-size:34px;font-weight:600;line-height:1.05">Hallo Mama</span>
+          <span id="date" style="font-size:18px" class="muted"></span>
+        </div>
       </div>
       <div style="display:flex;gap:10px;align-items:center">
       <div id="miniRadio" class="glass pill hidden fade" style="display:flex;align-items:center;gap:10px;padding:6px 8px 6px 6px">
         <button id="miniOpen" aria-label="Radio öffnen" style="display:flex;align-items:center;gap:10px;border:0;background:none;padding:0">
-          <span id="miniArt" style="width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;overflow:hidden"></span>
+          <span id="miniArt" style="width:38px;height:38px;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;overflow:hidden"></span>
           <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.15">
             <span style="font-size:11px;letter-spacing:1.5px;color:rgba(255,255,255,.6)">LÄUFT</span>
             <span id="miniName" style="font-size:15px;font-weight:600"></span>
@@ -242,7 +249,8 @@ input.field::placeholder{color:rgba(255,255,255,.5)}
       <button data-view="home" class="nav on" aria-label="Start"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></button>
       <button data-view="mat" class="nav" aria-label="Material"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg></button>
       <button data-view="radio" class="nav" aria-label="Radio"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
-      <button data-view="night" class="nav" aria-label="Nachtmodus"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <button id="setBtn" class="nav" aria-label="Einstellungen" style="width:56px;height:56px;border-radius:999px;border:0;background:transparent;display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+      <button data-view="night" class="nav" aria-label="Nachtmodus (zweimal tippen)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
     </nav>
   </div>
 
@@ -410,7 +418,15 @@ function show(v) {
   tick();
   try { if (window.BastelOS) BastelOS.setBrightness(v.startsWith('night') ? 0.15 : -1); } catch (e) {}
 }
-document.querySelectorAll('#dock button').forEach((b) => b.onclick = () => show(b.dataset.view));
+let nightArm = 0;
+document.querySelectorAll('#dock button[data-view]').forEach((b) => b.onclick = () => {
+  if (b.dataset.view === 'night') {
+    if (Date.now() - nightArm < 2500) { nightArm = 0; b.classList.remove('arm'); show('night'); return; }
+    nightArm = Date.now(); b.classList.add('arm'); sndTap(); say('Nochmal tippen für den Nachtmodus');
+    setTimeout(() => b.classList.remove('arm'), 2500); return;
+  }
+  show(b.dataset.view);
+});
 $('wake1').onclick = () => show('home');
 $('wake2').onclick = () => show('home');
 $('toNight2').onclick = () => show('night2');
@@ -784,7 +800,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '1.4.1';
+const APP_VERSION = '1.5.0';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -814,6 +830,39 @@ function startUpdate(v) {
 setInterval(checkUpdate, 60 * 1000);
 setTimeout(checkUpdate, 8000);
 window.bastelCheckUpdate = checkUpdate;
+
+/* =========================================================
+   EINSTELLUNGEN (öffnet die Android-Seiten über die Tablet-App)
+   ========================================================= */
+const SET_ICONS = {
+  wifi: '<path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M2 9a15 15 0 0 1 20 0"/><circle cx="12" cy="19.5" r="1"/>',
+  bluetooth: '<path d="M7 7l10 10-5 4V3l5 4L7 17"/>',
+  sound: '<path d="M11 5L6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>',
+  display: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  all: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  reload: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>'
+};
+function openSettings() {
+  const tiles = [
+    ['wifi', 'WLAN'], ['bluetooth', 'Bluetooth'], ['sound', 'Ton'],
+    ['display', 'Bildschirm'], ['all', 'Alle Einstellungen'], ['reload', 'Dashboard neu laden']
+  ];
+  const appV = window.BastelOS && BastelOS.version ? BastelOS.version() : '–';
+  $('sheetBox').innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:24px;font-weight:600">Einstellungen</span><span class="muted" style="font-size:14px">Dashboard ' + APP_VERSION + ' · App ' + esc(appV) + '</span></div>'
+    + '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">'
+    + tiles.map(([k, t]) => '<button class="setTile" data-set="' + k + '"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFC56B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + SET_ICONS[k] + '</svg>' + t + '</button>').join('')
+    + '</div><button id="sCancel" class="gb pill" style="height:52px;font-size:16px">Schließen</button>';
+  $('sheetBox').querySelectorAll('[data-set]').forEach((b) => b.onclick = () => {
+    const k = b.dataset.set; sndTap();
+    if (k === 'reload') { location.replace(location.pathname + '?t=' + Date.now()); return; }
+    if (window.BastelOS && BastelOS.openSettings) { closeSheet(); BastelOS.openSettings(k); }
+    else if (window.BastelOS) say('Bitte erst die neue Tablet-App installieren');
+    else say('Das geht nur in der Tablet-App');
+  });
+  $('sCancel').onclick = closeSheet;
+  $('sheet').classList.remove('hidden');
+}
+$('setBtn').onclick = () => { sndTap(); openSettings(); };
 
 /* =========================================================
    WETTER (Standort vom Tablet, Daten von Open-Meteo)

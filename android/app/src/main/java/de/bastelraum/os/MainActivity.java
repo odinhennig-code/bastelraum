@@ -46,7 +46,7 @@ import java.util.ArrayList;
 public class MainActivity extends Activity {
 
     private static final String URL = "https://odinhennig-code.github.io/bastelraum/";
-    private static final String VERSION = "1.0";
+    private static final String VERSION = "1.1";
 
     private WebView web;
     private FrameLayout recovery;
@@ -386,6 +386,17 @@ public class MainActivity extends Activity {
                 WindowManager.LayoutParams lp = getWindow().getAttributes();
                 lp.screenBrightness = v < 0 ? WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE : Math.max(0.01f, Math.min(1f, v));
                 getWindow().setAttributes(lp);
+            } });
+        }
+        @JavascriptInterface public void openSettings(final String which) {
+            ui.post(new Runnable() { @Override public void run() {
+                String action;
+                if ("wifi".equals(which)) action = Settings.ACTION_WIFI_SETTINGS;
+                else if ("bluetooth".equals(which)) action = Settings.ACTION_BLUETOOTH_SETTINGS;
+                else if ("sound".equals(which)) action = Settings.ACTION_SOUND_SETTINGS;
+                else if ("display".equals(which)) action = Settings.ACTION_DISPLAY_SETTINGS;
+                else action = Settings.ACTION_SETTINGS;
+                if (!safeStart(new Intent(action))) safeStart(new Intent(Settings.ACTION_SETTINGS));
             } });
         }
         @JavascriptInterface public void startSpeech(final String inputId) {
