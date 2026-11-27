@@ -44,7 +44,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final String URL = "https://odinhennig-code.github.io/bastelraum/";
-    private static final String VERSION = "1.4";
+    private static final String VERSION = "1.5";
 
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -139,11 +139,7 @@ public class MainActivity extends Activity {
         setContentView(root);
         askPermissions();
 
-        tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
-            @Override public void onInit(int st) {
-                if (st == TextToSpeech.SUCCESS) { tts.setLanguage(Locale.GERMANY); ttsReady = true; }
-            }
-        });
+        initTts();
 
         motion = new MotionWatcher(this, new MotionWatcher.Listener() {
             @Override public void onMotion() {
@@ -152,6 +148,27 @@ public class MainActivity extends Activity {
         });
 
         web.loadUrl(URL);
+    }
+
+    /* Schönere Stimme: SherpaTTS (Piper-Stimmen, kostenlos, offline) wird bevorzugt, wenn installiert */
+    private static final String[] NICE_ENGINES = {"org.woheller69.ttsengine", "com.k2fsa.sherpa.onnx.tts.engine"};
+    private void initTts() {
+        String engine = null;
+        for (String pkg : NICE_ENGINES) {
+            try { getPackageManager().getPackageInfo(pkg, 0); engine = pkg; break; } catch (Exception ignored) {}
+        }
+        TextToSpeech.OnInitListener l = new TextToSpeech.OnInitListener() {
+            @Override public void onInit(int st) {
+                if (st == TextToSpeech.SUCCESS) {
+                    tts.setLanguage(Locale.GERMANY);
+                    tts.setSpeechRate(1.0f);
+                    ttsReady = true;
+                }
+            }
+        };
+        if (tts != null) { try { tts.shutdown(); } catch (Exception ignored) {} }
+        ttsReady = false;
+        tts = engine != null ? new TextToSpeech(this, l, engine) : new TextToSpeech(this, l);
     }
 
     private void askPermissions() {
@@ -184,7 +201,9 @@ public class MainActivity extends Activity {
         super.onResume();
         hideSystemUi();
         if (pageFailed) web.loadUrl(URL);
+        else web.evaluateJavascript("window.bastelCheckUpdate && window.bastelCheckUpdate()", null);
         if (wakeEnabled) restartWake(800);
+        if (tts != null && !ttsReady) initTts();
         if (motion != null) motion.setEnabled(motionWanted);
     }
 
@@ -413,6 +432,7 @@ public class MainActivity extends Activity {
                 else if ("bluetooth".equals(which)) action = Settings.ACTION_BLUETOOTH_SETTINGS;
                 else if ("sound".equals(which)) action = Settings.ACTION_SOUND_SETTINGS;
                 else if ("display".equals(which)) action = Settings.ACTION_DISPLAY_SETTINGS;
+                else if ("tts".equals(which)) { if (safeStart(new Intent("com.android.settings.TTS_SETTINGS"))) { ui.postDelayed(new Runnable() { @Override public void run() { initTts(); } }, 1000); return; } action = Settings.ACTION_SETTINGS; }
                 else action = Settings.ACTION_SETTINGS;
                 if (!safeStart(new Intent(action))) safeStart(new Intent(Settings.ACTION_SETTINGS));
             } });

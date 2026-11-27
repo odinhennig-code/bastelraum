@@ -79,26 +79,29 @@ html.lite .fade{animation-duration:.3s}
 @keyframes lbob{50%{transform:translateY(-6px)}}
 #luigi[data-shape=line] .lhandle{width:var(--w,40px);height:4px;border-radius:4px;animation:lflow 3s linear infinite;background:linear-gradient(90deg,#FFB547,#FF5FA2,#8B6CFF,#4FA3FF,#FFB547);background-size:300% 100%}
 #luigi[data-shape=walker] .lhandle{display:none}
-.lman{display:none;position:relative;width:16px;height:30px;zoom:1.5}
+.lman{display:none;overflow:visible}
 #luigi[data-shape=walker] .lman{display:block}
 #luigi.flip .lman{transform:scaleX(-1)}
-.lmh{position:absolute;left:1px;top:0;width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,#FFB547,#FF5FA2 55%,#8B6CFF);box-shadow:0 0 10px rgba(255,120,170,.6)}
-.lmh .leyes{display:flex;gap:3px;left:62%}
-.lmh .leyes i{width:2px;height:3px}
-.lmb{position:absolute;left:4px;top:13px;width:8px;height:10px;border-radius:4px;background:linear-gradient(180deg,#8B6CFF,#4FA3FF)}
-.lml{position:absolute;top:21px;width:2px;height:9px;border-radius:2px;background:#9BB8FF;transform-origin:top center}
-.lml.a{left:5px}.lml.b{left:9px}
-#luigi.walking .lml.a{animation:lleg .35s ease-in-out infinite alternate}
-#luigi.walking .lml.b{animation:lleg .35s ease-in-out infinite alternate-reverse}
-#luigi.walking .lman{animation:lstep .35s ease-in-out infinite alternate}
-@keyframes lleg{from{transform:rotate(28deg)}to{transform:rotate(-28deg)}}
-@keyframes lstep{to{margin-top:-2px}}
-#luigi.sit .lml{transform:rotate(-70deg)}
+.lman .lleg,.lman .larm{transform-box:fill-box;transform-origin:50% 8%}
+.lman .lbody{transform-box:fill-box;transform-origin:50% 100%;animation:lbreathe 3s ease-in-out infinite}
+@keyframes lbreathe{50%{transform:scale(1.03,.97)}}
+.lman .leye{transform-box:fill-box;transform-origin:center;animation:lblink 4.5s infinite}
+#luigi.walking .lleg.a{animation:lleg .34s ease-in-out infinite alternate}
+#luigi.walking .lleg.b{animation:lleg .34s ease-in-out infinite alternate-reverse}
+#luigi.walking .larm.a{animation:lleg .34s ease-in-out infinite alternate-reverse}
+#luigi.walking .larm.b{animation:lleg .34s ease-in-out infinite alternate}
+#luigi.walking .lman{animation:lstep .17s ease-in-out infinite alternate}
+@keyframes lleg{from{transform:rotate(24deg)}to{transform:rotate(-24deg)}}
+@keyframes lstep{to{translate:0 -2px}}
+#luigi.sit .lleg{transform:rotate(-75deg)}
+#luigi.wave .larm.b{animation:lwave .5s ease-in-out infinite alternate}
+@keyframes lwave{from{transform:rotate(-150deg)}to{transform:rotate(-110deg)}}
 #lGlow{position:absolute;left:0;top:0;bottom:0;width:220px;z-index:37;pointer-events:none;opacity:0;transform:scaleX(.15);transform-origin:left;
   transition:opacity .45s,transform .7s cubic-bezier(.2,1,.3,1);
   background:linear-gradient(90deg,rgba(255,160,80,.55),rgba(190,110,255,.28) 30%,rgba(80,140,255,.08) 65%,transparent);
   -webkit-mask-image:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent)}
-#lGlow.on{opacity:1;transform:none;animation:lglow 2.6s ease-in-out infinite alternate}
+#lGlow.on{opacity:calc(.55 + var(--lv,0) * .45);transform:scaleX(calc(.75 + var(--lv,0) * .9));animation:none;transition:opacity .12s,transform .12s;background-position:0 calc(var(--lv,0) * 100%)}
+#lGlow{background-size:100% 200%}
 @keyframes lglow{to{opacity:.65}}
 #lShade{position:absolute;inset:0;z-index:36;background:rgba(2,3,10,.45);animation:fadein .4s both}
 #lPanel{position:absolute;left:30px;bottom:122px;width:580px;z-index:42;border-radius:30px;padding:22px 28px 24px;display:flex;flex-direction:column;gap:12px;
@@ -317,7 +320,7 @@ input.field::placeholder{color:rgba(255,255,255,.5)}
   <!-- ================= LUIGI ================= -->
   <div id="lShade" class="hidden"></div>
   <div id="lGlow"></div>
-  <button id="luigi" data-shape="edge" aria-label="Luigi – Sprachassistent"><span class="lhandle"><span class="leyes"><i></i><i></i></span></span><span class="lman"><span class="lmh"><span class="leyes"><i></i><i></i></span></span><span class="lmb"></span><span class="lml a"></span><span class="lml b"></span></span></button>
+  <button id="luigi" data-shape="edge" aria-label="Luigi – Sprachassistent"><span class="lhandle"><span class="leyes"><i></i><i></i></span></span><svg class="lman" width="36" height="48" viewBox="0 0 40 54" aria-hidden="true"><defs><linearGradient id="lmg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC56B"/><stop offset=".35" stop-color="#FF6FA8"/><stop offset=".7" stop-color="#8B6CFF"/><stop offset="1" stop-color="#4FA3FF"/></linearGradient><radialGradient id="lms" cx=".35" cy=".25" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><rect class="lleg a" x="12.5" y="38" width="5.5" height="13" rx="2.75" fill="#7C83FF"/><rect class="lleg b" x="22" y="38" width="5.5" height="13" rx="2.75" fill="#5B8DFF"/><rect class="larm a" x="2" y="22" width="5" height="12" rx="2.5" fill="#FF8FB8"/><rect class="larm b" x="33" y="22" width="5" height="12" rx="2.5" fill="#9C7BFF"/><g class="lbody"><ellipse cx="20" cy="24" rx="15.5" ry="16.5" fill="url(#lmg)"/><ellipse cx="20" cy="24" rx="15.5" ry="16.5" fill="url(#lms)"/><ellipse class="leye" cx="15" cy="22" rx="2.4" ry="3.3" fill="#fff"/><ellipse class="leye" cx="25" cy="22" rx="2.4" ry="3.3" fill="#fff"/><circle cx="15.6" cy="22.8" r="1.2" fill="#2A1B4A"/><circle cx="25.6" cy="22.8" r="1.2" fill="#2A1B4A"/><ellipse cx="11.5" cy="28" rx="2.2" ry="1.3" fill="#FF5FA2" opacity=".55"/><ellipse cx="28.5" cy="28" rx="2.2" ry="1.3" fill="#FF5FA2" opacity=".55"/><path d="M17.5 29.5q2.5 2 5 0" stroke="#2A1B4A" stroke-width="1.3" fill="none" stroke-linecap="round"/></g></svg></button>
   <div id="lPanel" class="glass" aria-live="polite">
     <div class="lhead"><span class="ldots"><i></i><i></i><i></i><i></i></span><span>Luigi</span></div>
     <span id="lHeard"></span>
@@ -896,7 +899,7 @@ function luigiListen() {
   rec.start();
 }
 window.onNativePartial = (id, t) => { if (id === '__luigi' && t) $('lHeard').textContent = '„' + t + '“'; };
-window.onNativeRms = (v) => { document.querySelector('.ldots').style.setProperty('--lv', Math.max(0, Math.min(1, (v + 2) / 12)).toFixed(2)); };
+window.onNativeRms = (v) => { const lv = Math.max(0, Math.min(1, (v + 2) / 12)).toFixed(2); $('lGlow').style.setProperty('--lv', lv); document.querySelector('.ldots').style.setProperty('--lv', Math.max(0, Math.min(1, (v + 2) / 12)).toFixed(2)); };
 window.onWakeWord = (rest) => {
   luigiOpen();
   if (rest && rest.trim().length > 2) { luigiHeard(rest.trim(), null); return; }
@@ -913,6 +916,7 @@ function luigiReply(t) {
   const o = $('lPanel'); o.classList.remove('think', 'listen');
   const b = $('lSay'); b.textContent = t; b.classList.remove('hidden');
   b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
+  if (store.get('luigiVoice', true)) speak(t);
   clearTimeout(L.closeT); L.closeT = setTimeout(luigiClose, 5200);
 }
 function luigiClose() {
@@ -928,7 +932,7 @@ $('lShade').onclick = luigiClose;
 /* =========================================================
    LUIGI LEBT – kleine Ausflüge übers Dashboard
    ========================================================= */
-const B = { gen: 0, away: false, nextAt: Date.now() + 10000 };
+const B = { gen: 0, away: false, nextAt: Date.now() + 10000, x: 0, y: 330 };
 const lbtn = $('luigi');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -940,6 +944,7 @@ function shape(n) { lbtn.dataset.shape = n; lbtn.classList.remove('walking', 'si
 function moveTo(x, y, ms, ease) {
   lbtn.style.transition = 'transform ' + ms + 'ms ' + (ease || 'cubic-bezier(.45,.05,.3,1)') + ',opacity .3s';
   lbtn.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px)';
+  B.x = x; B.y = y;
   return wait(ms);
 }
 function buddyHome(fast) {
@@ -950,55 +955,71 @@ function buddyHome(fast) {
 }
 const alive = (g) => g === B.gen && !L.open && view === 'home';
 
-async function bFloat(g) {
+/* Freie Wege: linker Rand (x 14), Streifen unter der Kopfzeile (y 112), Boden (y 782) */
+async function path(g, pts, ms) { for (const [x, y] of pts) { await moveTo(x, y, ms || 900); if (!alive(g)) return false; } return true; }
+async function toHeader(g, x, y) { shape('orb'); return path(g, [[14, 112], [x, 112], [x, y]]); }
+async function toFloor(g, x) { shape('orb'); return path(g, [[14, 778], [x, 778]]); }
+async function goHome(g) {
   shape('orb');
-  for (let i = 0; i < 2 + Math.floor(Math.random() * 2); i++) {
-    await moveTo(rnd(90, 1180), rnd(150, 640), rnd(1800, 2800)); if (!alive(g)) return;
-    await wait(rnd(1500, 3000)); if (!alive(g)) return;
-  }
+  const onFloor = B.y > 600, inHead = B.y < 130;
+  if (onFloor) await path(g, [[B.x, 778], [14, 778]], 900);
+  else if (inHead) await path(g, [[B.x, 112], [14, 112]], 900);
+  if (alive(g)) buddyHome(false);
 }
-async function bWalk(g) {
-  const cards = [...document.querySelectorAll('#vHome section, #callBtn')].filter((c) => c.offsetParent);
-  const c = cards[Math.floor(Math.random() * cards.length)]; if (!c) return;
-  const r = stageRect(c), leftToRight = Math.random() < .5;
-  const x0 = leftToRight ? r.x + 24 : r.x + r.w - 40, x1 = leftToRight ? r.x + r.w - 40 : r.x + 24, y = r.y - 30;
-  shape('orb'); await moveTo(x0, y - 4, 1600); if (!alive(g)) return;
-  shape('walker'); lbtn.classList.toggle('flip', !leftToRight); await wait(300);
-  lbtn.classList.add('walking'); await moveTo(x1, y, Math.abs(x1 - x0) / 70 * 1000, 'linear'); if (!alive(g)) return;
-  lbtn.classList.remove('walking'); await wait(1200);
+async function walkTo(g, x, y) {
+  shape('walker'); lbtn.classList.toggle('flip', x < B.x); await wait(250);
+  lbtn.classList.add('walking'); await moveTo(x, y, Math.abs(x - B.x) / 70 * 1000, 'linear'); lbtn.classList.remove('walking');
+  return alive(g);
 }
-async function bClock(g) {
+async function bFloor(g) {            // läuft unten links am Boden entlang
+  if (!await toFloor(g, 70)) return;
+  B.y = 778; lbtn.style.transform = 'translate(70px,744px)'; await wait(50);
+  await moveTo(70, 744, 300); if (!alive(g)) return;
+  if (!await walkTo(g, rnd(250, 430), 744)) return;
+  lbtn.classList.add('wave'); await wait(1800); lbtn.classList.remove('wave'); if (!alive(g)) return;
+  await walkTo(g, 70, 744);
+}
+async function bHeader(g) {           // spaziert oben durch die freie Fläche neben „Hallo Mama“
+  const r = stageRect(document.querySelector('header span[style*="34px"]'));
+  const x0 = r.x + r.w + 30, y = 52;
+  if (!await toHeader(g, x0, y)) return;
+  if (!await walkTo(g, x0 + rnd(120, 260), y)) return;
+  await wait(rnd(1500, 2500)); if (!alive(g)) return;
+  await walkTo(g, x0, y);
+}
+async function bClock(g) {            // setzt sich oben auf die Uhr
   const r = stageRect($('clkH').parentElement);
-  shape('orb'); await moveTo(r.x + r.w / 2 - 8, r.y - 26, 1800); if (!alive(g)) return;
-  shape('walker'); lbtn.classList.add('sit'); await wait(rnd(4000, 6000)); if (!alive(g)) return;
-  lbtn.classList.remove('sit'); lbtn.classList.add('walking');
-  await moveTo(r.x + r.w - 20, r.y - 26, 1400, 'linear'); lbtn.classList.remove('walking');
+  if (!await toHeader(g, r.x + r.w + 8, 112)) return;
+  await moveTo(r.x + r.w / 2 - 18, r.y - 42, 1200); if (!alive(g)) return;
+  shape('walker'); lbtn.classList.add('sit'); await wait(rnd(4500, 6500)); if (!alive(g)) return;
+  lbtn.classList.remove('sit'); lbtn.classList.add('wave'); await wait(1400); lbtn.classList.remove('wave');
 }
-async function bStretch(g) {
-  const targets = [document.querySelector('header span[style*="34px"]'), $('date'), $('clkH').parentElement].filter(Boolean);
-  const el = targets[Math.floor(Math.random() * targets.length)];
-  const r = stageRect(el);
-  shape('orb'); await moveTo(r.x, r.y + r.h + 2, 1700); if (!alive(g)) return;
+async function bStretch(g) {          // macht sich unter einer Überschrift breit
+  const targets = [document.querySelector('header span[style*="34px"]'), $('date')].filter(Boolean);
+  const r = stageRect(targets[Math.floor(Math.random() * targets.length)]);
+  if (!await toHeader(g, r.x, 112)) return;
+  await moveTo(r.x, r.y + r.h + 3, 700); if (!alive(g)) return;
   lbtn.style.setProperty('--w', '22px'); shape('line'); await wait(60);
   lbtn.style.setProperty('--w', Math.round(r.w) + 'px'); await wait(rnd(3500, 5000)); if (!alive(g)) return;
   lbtn.style.setProperty('--w', '22px'); await wait(500); shape('orb');
 }
-async function bDock(g) {
+async function bDock(g) {             // läuft oben über die Knopfleiste
   const r = stageRect($('dock'));
-  shape('orb'); await moveTo(r.x + 20, r.y - 30, 1600); if (!alive(g)) return;
-  shape('walker'); lbtn.classList.add('walking');
-  await moveTo(r.x + r.w - 36, r.y - 30, r.w / 70 * 1000, 'linear'); lbtn.classList.remove('walking');
+  shape('orb'); if (!await path(g, [[14, 778], [r.x - 30, 778], [r.x + 14, r.y - 46]], 900)) return;
+  if (!await walkTo(g, r.x + r.w - 50, r.y - 46)) return;
+  lbtn.classList.add('wave'); await wait(1500); lbtn.classList.remove('wave'); if (!alive(g)) return;
+  await walkTo(g, r.x + 14, r.y - 46); if (!alive(g)) return;
+  shape('orb'); await moveTo(r.x - 30, 778, 700);
 }
-const BEHAVIORS = [bFloat, bWalk, bWalk, bClock, bStretch, bDock];
+const BEHAVIORS = [bFloor, bHeader, bClock, bStretch, bDock];
 async function buddyTrip() {
   const g = ++B.gen; B.away = true;
-  const n = 1 + Math.floor(Math.random() * 2);
-  for (let i = 0; i < n; i++) { await BEHAVIORS[Math.floor(Math.random() * BEHAVIORS.length)](g); if (!alive(g)) return; }
-  if (Math.random() < .6) buddyHome(false); else { shape('orb'); B.nextAt = Date.now() + rnd(6000, 10000); }
+  await BEHAVIORS[Math.floor(Math.random() * BEHAVIORS.length)](g);
+  if (alive(g)) await goHome(g);
 }
 setInterval(() => {
   if (L.open) return;
-  if (view !== 'home') { if (B.away) buddyHome(true); return; }
+  if (view !== 'home' || !store.get('luigiMove', true)) { if (B.away) buddyHome(true); return; }
   if (Date.now() < B.nextAt) return;
   B.nextAt = Date.now() + 999999;
   buddyTrip();
@@ -1158,7 +1179,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.8.0';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -1186,24 +1207,31 @@ function startUpdate(v) {
   }, 500);
 }
 setInterval(checkUpdate, 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
 setTimeout(checkUpdate, 8000);
 window.bastelCheckUpdate = checkUpdate;
 
 /* =========================================================
    EINSTELLUNGEN (öffnet die Android-Seiten über die Tablet-App)
    ========================================================= */
+const SET_ICONS_DUMMY = 0;
 const SET_ICONS = {
   wifi: '<path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M2 9a15 15 0 0 1 20 0"/><circle cx="12" cy="19.5" r="1"/>',
   bluetooth: '<path d="M7 7l10 10-5 4V3l5 4L7 17"/>',
   sound: '<path d="M11 5L6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>',
   display: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   all: '<path d="M4 6h16M4 12h16M4 18h16"/>',
-  reload: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>'
+  reload: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',
+  voice: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  tts: '<path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6"/>',
+  move: '<path d="M5 12h14M13 6l6 6-6 6"/><circle cx="5" cy="12" r="2"/>',
+  update: '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>'
 };
 function openSettings() {
   const tiles = [
     ['wifi', 'WLAN'], ['bluetooth', 'Bluetooth'], ['sound', 'Ton'],
-    ['display', 'Bildschirm'], ['all', 'Alle Einstellungen'], ['reload', 'Dashboard neu laden']
+    ['display', 'Bildschirm'], ['voice', store.get('luigiVoice', true) ? 'Luigi spricht: an' : 'Luigi spricht: aus'], ['move', store.get('luigiMove', true) ? 'Luigi bewegt sich: an' : 'Luigi bewegt sich: aus'], ['tts', 'Luigis Stimme wählen'],
+    ['update', 'Nach Updates suchen'], ['all', 'Alle Einstellungen'], ['reload', 'Dashboard neu laden']
   ];
   const appV = window.BastelOS && BastelOS.version ? BastelOS.version() : '–';
   $('sheetBox').innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:24px;font-weight:600">Einstellungen</span><span class="muted" style="font-size:14px">Dashboard ' + APP_VERSION + ' · App ' + esc(appV) + '</span></div>'
@@ -1213,6 +1241,9 @@ function openSettings() {
   $('sheetBox').querySelectorAll('[data-set]').forEach((b) => b.onclick = () => {
     const k = b.dataset.set; sndTap();
     if (k === 'reload') { location.replace(location.pathname + '?t=' + Date.now()); return; }
+    if (k === 'move') { const on = !store.get('luigiMove', true); store.set('luigiMove', on); if (!on && B.away) buddyHome(true); openSettings(); return; }
+    if (k === 'voice') { store.set('luigiVoice', !store.get('luigiVoice', true)); openSettings(); return; }
+    if (k === 'update') { closeSheet(); say('Suche nach Updates …'); updating = false; checkUpdate().then(() => { if (!updating) say('Alles aktuell (Version ' + APP_VERSION + ')'); }); return; }
     if (window.BastelOS && BastelOS.openSettings) { closeSheet(); BastelOS.openSettings(k); }
     else if (window.BastelOS) say('Bitte erst die neue Tablet-App installieren');
     else say('Das geht nur in der Tablet-App');
