@@ -953,34 +953,82 @@ function moveTo(x, y, ms, ease) {
   B.x = x; B.y = y;
   return wait(ms);
 }
+/* Flüssige, organische Bewegung: weiche Kurven durch die Wegpunkte, sanftes Anfahren und Abbremsen,
+   Neigung in Laufrichtung und leichtes Quetschen je nach Tempo */
+let rafTok = 0;
+function cr(p0, p1, p2, p3, t) {
+  const t2 = t * t, t3 = t2 * t;
+  const f = (a, b, c, d) => .5 * ((2 * b) + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+  return [f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1])];
+}
+function glide(pts, speed, opts) {
+  opts = opts || {};
+  const tok = ++rafTok;
+  const P = [[B.x, B.y]].concat(pts);
+  const S = [];
+  for (let i = 0; i < P.length - 1; i++) {
+    const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || P[i + 1];
+    for (let t = 0; t < 1; t += 0.04) S.push(cr(p0, p1, p2, p3, t));
+  }
+  S.push(P[P.length - 1]);
+  const Ls = [0];
+  for (let i = 1; i < S.length; i++) Ls.push(Ls[i - 1] + Math.hypot(S[i][0] - S[i - 1][0], S[i][1] - S[i - 1][1]));
+  const total = Ls[Ls.length - 1], dur = Math.max(200, total / speed * 1000);
+  lbtn.style.transition = 'opacity .3s';
+  return new Promise((res) => {
+    const t0 = performance.now(); let px = B.x, j = 0, tilt = 0;
+    function frame(now) {
+      if (tok !== rafTok) { res(false); return; }
+      const u = Math.min(1, (now - t0) / dur);
+      const e = opts.linear ? u : (u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+      const d = e * total;
+      while (j < Ls.length - 2 && Ls[j + 1] < d) j++;
+      const seg = Ls[j + 1] - Ls[j] || 1, k = Math.min(1, Math.max(0, (d - Ls[j]) / seg));
+      const x = S[j][0] + (S[j + 1][0] - S[j][0]) * k, y = S[j][1] + (S[j + 1][1] - S[j][1]) * k;
+      const vx = x - px; px = x;
+      tilt += ((Math.max(-12, Math.min(12, vx * 2.2))) - tilt) * .15;
+      const sp = Math.min(1, Math.abs(vx) / 9);
+      lbtn.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) rotate(' + (opts.noTilt ? 0 : tilt).toFixed(2) + 'deg)'
+        + (opts.noSquash ? '' : ' scale(' + (1 + sp * .14).toFixed(3) + ',' + (1 - sp * .09).toFixed(3) + ')');
+      B.x = x; B.y = y;
+      if (u < 1) requestAnimationFrame(frame);
+      else { lbtn.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; res(true); }
+    }
+    requestAnimationFrame(frame);
+  });
+}
 function buddyHome(fast) {
   const was = B.away; B.gen++; B.away = false;
-  shape('edge'); moveTo(0, 330, fast ? 350 : 1400, fast ? 'cubic-bezier(.5,0,.2,1)' : undefined);
+  if (Math.abs(B.x) < 2 && Math.abs(B.y - 330) < 2) { shape('edge'); }
+  else {
+    if (lbtn.dataset.shape !== 'edge') shape('orb');
+    const pts = fast ? [[0, 330]] : (B.y > 600 ? [[14, 760], [0, 330]] : B.y < 130 ? [[14, 140], [0, 330]] : [[0, 330]]);
+    glide(pts, fast ? 1600 : 300).then((ok) => { if (ok && !B.away) shape('edge'); });
+  }
   B.nextAt = Date.now() + rnd(10000, 16000);
   return was;
 }
 const alive = (g) => g === B.gen && !L.open && view === 'home';
 
 /* Freie Wege: linker Rand (x 14), Streifen unter der Kopfzeile (y 112), Boden (y 782) */
-async function path(g, pts, ms) { for (const [x, y] of pts) { await moveTo(x, y, ms || 900); if (!alive(g)) return false; } return true; }
+async function path(g, pts, speed) { const ok = await glide(pts, speed || 300); return ok && alive(g); }
 async function toHeader(g, x, y) { shape('orb'); return path(g, [[14, 112], [x, 112], [x, y]]); }
 async function toFloor(g, x) { shape('orb'); return path(g, [[14, 778], [x, 778]]); }
 async function goHome(g) {
   shape('orb');
   const onFloor = B.y > 600, inHead = B.y < 130;
-  if (onFloor) await path(g, [[B.x, 778], [14, 778]], 900);
-  else if (inHead) await path(g, [[B.x, 112], [14, 112]], 900);
+  if (onFloor) await path(g, [[B.x, 778], [40, 772]]);
+  else if (inHead) await path(g, [[B.x, 112], [40, 118]]);
   if (alive(g)) buddyHome(false);
 }
 async function walkTo(g, x, y) {
   shape('walker'); lbtn.classList.toggle('flip', x < B.x); await wait(250);
-  lbtn.classList.add('walking'); await moveTo(x, y, Math.abs(x - B.x) / 70 * 1000, 'linear'); lbtn.classList.remove('walking');
+  lbtn.classList.add('walking'); await glide([[x, y]], 70, { linear: true, noTilt: true, noSquash: true }); lbtn.classList.remove('walking');
   return alive(g);
 }
 async function bFloor(g) {            // läuft unten links am Boden entlang
   if (!await toFloor(g, 70)) return;
-  B.y = 778; lbtn.style.transform = 'translate(70px,744px)'; await wait(50);
-  await moveTo(70, 744, 300); if (!alive(g)) return;
+  if (!await path(g, [[70, 744]], 120)) return;
   if (!await walkTo(g, rnd(250, 430), 744)) return;
   lbtn.classList.add('wave'); await wait(1800); lbtn.classList.remove('wave'); if (!alive(g)) return;
   await walkTo(g, 70, 744);
@@ -996,7 +1044,7 @@ async function bHeader(g) {           // spaziert oben durch die freie Fläche n
 async function bClock(g) {            // setzt sich oben auf die Uhr
   const r = stageRect($('clkH').parentElement);
   if (!await toHeader(g, r.x + r.w + 8, 112)) return;
-  await moveTo(r.x + r.w / 2 - 18, r.y - 42, 1200); if (!alive(g)) return;
+  if (!await path(g, [[r.x + r.w / 2 - 18, r.y - 42]], 220)) return;
   shape('walker'); lbtn.classList.add('sit'); await wait(rnd(4500, 6500)); if (!alive(g)) return;
   lbtn.classList.remove('sit'); lbtn.classList.add('wave'); await wait(1400); lbtn.classList.remove('wave');
 }
@@ -1004,18 +1052,18 @@ async function bStretch(g) {          // macht sich unter einer Überschrift bre
   const targets = [document.querySelector('header span[style*="34px"]'), $('date')].filter(Boolean);
   const r = stageRect(targets[Math.floor(Math.random() * targets.length)]);
   if (!await toHeader(g, r.x, 112)) return;
-  await moveTo(r.x, r.y + r.h + 3, 700); if (!alive(g)) return;
+  if (!await path(g, [[r.x, r.y + r.h + 3]], 200)) return;
   lbtn.style.setProperty('--w', '22px'); shape('line'); await wait(60);
   lbtn.style.setProperty('--w', Math.round(r.w) + 'px'); await wait(rnd(3500, 5000)); if (!alive(g)) return;
   lbtn.style.setProperty('--w', '22px'); await wait(500); shape('orb');
 }
 async function bDock(g) {             // läuft oben über die Knopfleiste
   const r = stageRect($('dock'));
-  shape('orb'); if (!await path(g, [[14, 778], [r.x - 30, 778], [r.x + 14, r.y - 46]], 900)) return;
+  shape('orb'); if (!await path(g, [[14, 778], [r.x - 30, 778], [r.x + 14, r.y - 46]])) return;
   if (!await walkTo(g, r.x + r.w - 50, r.y - 46)) return;
   lbtn.classList.add('wave'); await wait(1500); lbtn.classList.remove('wave'); if (!alive(g)) return;
   await walkTo(g, r.x + 14, r.y - 46); if (!alive(g)) return;
-  shape('orb'); await moveTo(r.x - 30, 778, 700);
+  shape('orb'); await path(g, [[r.x - 30, 778]], 200);
 }
 const BEHAVIORS = [bFloor, bHeader, bClock, bStretch, bDock];
 async function buddyTrip() {
@@ -1185,7 +1233,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '1.8.2';
+const APP_VERSION = '1.8.3';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
