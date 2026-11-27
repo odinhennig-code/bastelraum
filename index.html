@@ -461,6 +461,7 @@ function show(v) {
   tick();
   $('luigi').classList.toggle('hidden', v.startsWith('night'));
   try { if (window.BastelOS) BastelOS.setBrightness(v.startsWith('night') ? 0.15 : -1); } catch (e) {}
+  try { if (window.BastelOS && BastelOS.setMotionWatch) BastelOS.setMotionWatch(v.startsWith('night')); } catch (e) {}
 }
 let nightArm = 0;
 document.querySelectorAll('#dock button[data-view]').forEach((b) => b.onclick = () => {
@@ -1025,6 +1026,7 @@ function luigiDo(raw) {
   if (has('was kannst du', 'hilfe')) return 'Ich kann Timer stellen, Radio anmachen, Odin rufen, Material eintragen und dir Uhrzeit und Wetter sagen.';
   return 'Das hab ich nicht verstanden. Sag zum Beispiel: Stell einen Timer auf 10 Minuten.';
 }
+window.onMotion = () => { if (view.startsWith('night')) { lastTouch = Date.now(); show('home'); } };
 if (window.BastelOS && BastelOS.setWakeWord) { try { BastelOS.setWakeWord(true); } catch (e) {} }
 
 /* =========================================================
@@ -1042,7 +1044,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.6.1';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;

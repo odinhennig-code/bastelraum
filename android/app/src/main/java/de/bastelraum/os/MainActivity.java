@@ -44,7 +44,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final String URL = "https://odinhennig-code.github.io/bastelraum/";
-    private static final String VERSION = "1.2";
+    private static final String VERSION = "1.3";
 
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -83,6 +83,10 @@ public class MainActivity extends Activity {
     private long lastRms = 0;
     private TextToSpeech tts;
     private boolean ttsReady = false;
+    /* ================= Bewegungsmelder ================= */
+    private MotionWatcher motion;
+    private boolean motionWanted = false;
+
     private final Runnable wakeRunner = new Runnable() { @Override public void run() { startWake(); } };
 
     @SuppressLint({"SetJavaScriptEnabled"})
@@ -141,13 +145,19 @@ public class MainActivity extends Activity {
             }
         });
 
+        motion = new MotionWatcher(this, new MotionWatcher.Listener() {
+            @Override public void onMotion() {
+                ui.post(new Runnable() { @Override public void run() { js("window.onMotion && window.onMotion()"); } });
+            }
+        });
+
         web.loadUrl(URL);
     }
 
     private void askPermissions() {
         if (Build.VERSION.SDK_INT >= 23) {
             ArrayList<String> need = new ArrayList<>();
-            for (String p : new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}) {
+            for (String p : new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}) {
                 if (checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED) need.add(p);
             }
             if (!need.isEmpty()) requestPermissions(need.toArray(new String[0]), 1);
@@ -175,6 +185,7 @@ public class MainActivity extends Activity {
         hideSystemUi();
         if (pageFailed) web.loadUrl(URL);
         if (wakeEnabled) restartWake(800);
+        if (motion != null) motion.setEnabled(motionWanted);
     }
 
     @Override protected void onPause() {
@@ -182,6 +193,7 @@ public class MainActivity extends Activity {
         ui.removeCallbacks(wakeRunner);
         if ("wake".equals(mode) && speech != null) { speech.cancel(); mode = "idle"; }
         unmuteBeeps();
+        if (motion != null) motion.setEnabled(false);
     }
 
     @Override public void onWindowFocusChanged(boolean f) { super.onWindowFocusChanged(f); if (f) hideSystemUi(); }
@@ -415,6 +427,9 @@ public class MainActivity extends Activity {
                 else { ui.removeCallbacks(wakeRunner); if ("wake".equals(mode) && speech != null) { speech.cancel(); mode = "idle"; } }
             } });
         }
+        @JavascriptInterface public void setMotionWatch(final boolean on) {
+            ui.post(new Runnable() { @Override public void run() { motionWanted = on; if (motion != null) motion.setEnabled(on); } });
+        }
         @JavascriptInterface public void speak(final String text) {
             ui.post(new Runnable() { @Override public void run() {
                 if (ttsReady) tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "luigi");
@@ -562,6 +577,7 @@ public class MainActivity extends Activity {
         unmuteBeeps();
         if (speech != null) speech.destroy();
         if (tts != null) tts.shutdown();
+        if (motion != null) motion.shutdown();
         super.onDestroy();
     }
 }
