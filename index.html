@@ -335,8 +335,8 @@ input.field::placeholder{color:rgba(255,255,255,.5)}
     <div class="glass fade" style="width:640px;border-radius:36px;padding:40px 44px;display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center;background:rgba(255,255,255,.06)">
       <div class="upspin" style="width:84px;height:84px;border-radius:50%;border:5px solid rgba(255,255,255,.12);border-top-color:#FFB547;border-right-color:#FF7A2F"></div>
       <span style="font-size:13px;letter-spacing:3px;color:#FFC56B;font-weight:600">ACHTUNG</span>
-      <span style="font-size:32px;font-weight:600;line-height:1.15">Automatisch wird ein Update geladen</span>
-      <span class="muted" style="font-size:17px">Das kann bis zu 2 Minuten dauern. Bitte das Tablet nicht ausschalten.</span>
+      <span style="font-size:32px;font-weight:600;line-height:1.15">Odin veröffentlicht jetzt ein Update</span>
+      <span class="muted" style="font-size:17px">Das Dashboard wird gleich neu gestartet. Das kann bis zu 2 Minuten dauern – bitte das Tablet nicht ausschalten.</span>
       <div style="width:100%;height:8px;border-radius:8px;background:rgba(255,255,255,.1);overflow:hidden"><div id="upBar" style="height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#FFC56B,#FF7A2F);box-shadow:0 0 14px #FF9A40;transition:width .5s linear"></div></div>
       <span id="upTxt" class="muted num" style="font-size:14px">Version wird vorbereitet …</span>
     </div>
@@ -1179,7 +1179,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.8.1';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;

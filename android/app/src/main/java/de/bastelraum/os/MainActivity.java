@@ -44,7 +44,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final String URL = "https://odinhennig-code.github.io/bastelraum/";
-    private static final String VERSION = "1.5";
+    private static final String VERSION = "1.6";
 
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -161,6 +161,7 @@ public class MainActivity extends Activity {
             @Override public void onInit(int st) {
                 if (st == TextToSpeech.SUCCESS) {
                     tts.setLanguage(Locale.GERMANY);
+                    pickMaleVoice();
                     tts.setSpeechRate(1.0f);
                     ttsReady = true;
                 }
@@ -169,6 +170,28 @@ public class MainActivity extends Activity {
         if (tts != null) { try { tts.shutdown(); } catch (Exception ignored) {} }
         ttsReady = false;
         tts = engine != null ? new TextToSpeech(this, l, engine) : new TextToSpeech(this, l);
+    }
+
+    /* Männliche deutsche Stimme suchen (Google-Stimmen „deg“/„nfh“, Thorsten bei SherpaTTS) */
+    private void pickMaleVoice() {
+        try {
+            java.util.Set<android.speech.tts.Voice> all = tts.getVoices();
+            if (all == null) return;
+            android.speech.tts.Voice best = null; int bestScore = -99;
+            for (android.speech.tts.Voice v : all) {
+                if (v.getLocale() == null || !"de".equals(v.getLocale().getLanguage())) continue;
+                String n = v.getName().toLowerCase(Locale.ROOT);
+                int sc = 0;
+                if (n.contains("thorsten") || n.contains("-deg-") || n.contains("-nfh-") || (n.contains("male") && !n.contains("female"))) sc += 10;
+                if (n.contains("female") || n.contains("-deb-") || n.contains("-dea-") || n.contains("eva") || n.contains("kerstin") || n.contains("ramona")) sc -= 5;
+                if (v.isNetworkConnectionRequired()) sc += 2;      // Online-Stimmen klingen natürlicher
+                if (v.getQuality() >= android.speech.tts.Voice.QUALITY_HIGH) sc += 2;
+                if ("DE".equals(v.getLocale().getCountry())) sc += 1;
+                if (sc > bestScore) { bestScore = sc; best = v; }
+            }
+            if (best != null) tts.setVoice(best);
+            if (bestScore < 10) tts.setPitch(0.85f); else tts.setPitch(1.0f);
+        } catch (Exception ignored) {}
     }
 
     private void askPermissions() {
