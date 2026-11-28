@@ -72,13 +72,22 @@ ol{margin:6px 0 0;padding-left:20px;line-height:1.55;font-size:15px}
   <header><h1>Bastelraum</h1></header>
   <div class="glass card fade stack">
     <span style="font-size:22px;font-weight:600">Mit dem Tablet verbinden</span>
-    <span class="muted" style="font-size:16px;line-height:1.45">Am Tablet auf das <b>Zahnrad</b> tippen und <b>„Handy verbinden“</b> wählen. Dann den QR-Code mit der iPhone-Kamera scannen – oder den Code hier eintippen:</span>
+    <span class="muted" style="font-size:16px;line-height:1.45">Am Tablet auf das <b>Zahnrad</b> tippen und <b>„Handy verbinden“</b> wählen. Dann hier den QR-Code scannen – oder den Code eintippen:</span>
+    <button id="scanBtn" class="accent" style="height:56px;border-radius:999px;font-size:17px;display:flex;align-items:center;justify-content:center;gap:10px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>QR-Code scannen</button>
     <div class="row">
       <input id="pairInput" class="field" placeholder="Code vom Tablet" autocomplete="off" autocapitalize="characters">
       <button id="pairBtn" class="accent" style="height:52px;border-radius:999px;padding:0 20px;font-size:16px">Verbinden</button>
     </div>
   </div>
 </section>
+
+<div id="scanView" class="hidden" style="position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center">
+  <video id="scanVid" playsinline muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>
+  <div style="position:relative;width:250px;height:250px;border-radius:28px;box-shadow:0 0 0 2000px rgba(0,0,0,.55);border:3px solid rgba(255,255,255,.9)"></div>
+  <span style="position:relative;margin-top:22px;font-size:17px;font-weight:500">QR-Code vom Tablet in den Rahmen halten</span>
+  <button id="scanClose" class="gb" style="position:relative;margin-top:22px;height:50px;padding:0 28px;border-radius:999px;font-size:16px">Abbrechen</button>
+  <canvas id="scanCv" style="display:none"></canvas>
+</div>
 
 <!-- ============ Hauptansicht ============ -->
 <section id="vMain" class="stack hidden">
@@ -169,6 +178,49 @@ function pair(k) {
   start();
 }
 $('pairBtn').onclick = () => pair($('pairInput').value);
+
+/* ---------- QR-Code scannen ---------- */
+let scanStream = null, scanRun = false, jsqrP = null;
+function loadJsQR() {
+  if (window.jsQR) return Promise.resolve();
+  return jsqrP || (jsqrP = new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); }));
+}
+function stopScan() { scanRun = false; if (scanStream) scanStream.getTracks().forEach((t) => t.stop()); scanStream = null; $('scanView').classList.add('hidden'); }
+function gotQR(text) {
+  const k = (String(text).match(/k=([A-Za-z0-9]+)/) || [])[1] || (/^[A-Za-z0-9]{8,14}$/.test(String(text).trim()) ? String(text).trim() : null);
+  if (!k) return false;
+  if (navigator.vibrate) navigator.vibrate(60);
+  stopScan(); pair(k); toast('Verbunden ✓'); return true;
+}
+async function startScan() {
+  try {
+    $('scanView').classList.remove('hidden');
+    const jsq = loadJsQR().catch(() => {});
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    const v = $('scanVid'); v.srcObject = scanStream; await v.play(); await jsq;
+    const det = ('BarcodeDetector' in window) ? new BarcodeDetector({ formats: ['qr_code'] }) : null;
+    const cv = $('scanCv'), cx = cv.getContext('2d', { willReadFrequently: true });
+    scanRun = true;
+    const tick = async () => {
+      if (!scanRun) return;
+      try {
+        if (v.videoWidth) {
+          if (det) { const r = await det.detect(v); if (r[0] && gotQR(r[0].rawValue)) return; }
+          else if (window.jsQR) {
+            const w = 480, h = Math.round(480 * v.videoHeight / v.videoWidth);
+            cv.width = w; cv.height = h; cx.drawImage(v, 0, 0, w, h);
+            const r = jsQR(cx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' });
+            if (r && gotQR(r.data)) return;
+          }
+        }
+      } catch (e) {}
+      setTimeout(tick, 120);
+    };
+    tick();
+  } catch (e) { stopScan(); toast('Kamera geht nicht – bitte Code eintippen'); }
+}
+$('scanBtn').onclick = startScan;
+$('scanClose').onclick = stopScan;
 $('pairInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') pair($('pairInput').value); });
 
 /* ---------- Verlauf ---------- */
