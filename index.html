@@ -592,10 +592,40 @@ function renderSw() {
    RUFEN / SCHNELL SCHICKEN / NACHRICHTEN
    (Verbindung zum Handy kommt in Schritt 2)
    ========================================================= */
-function sendToOdin(text) {
-  // TODO Schritt 2: hier wird die Push-Nachricht an Odins iPhone geschickt
-  console.log('An Odin:', text);
+/* Verbindung zu Odins Handy über ntfy (kostenloser Push-Dienst).
+   Jedes Tablet hat einen eigenen, geheimen Code – nur wer den Code hat, kann mitlesen. */
+const NTFY = 'https://ntfy.sh/';
+function pairKey() {
+  let k = store.get('pairKey', null);
+  if (!k) {
+    const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; k = '';
+    const r = new Uint32Array(10); (window.crypto || window.msCrypto).getRandomValues(r);
+    for (let i = 0; i < 10; i++) k += A[r[i] % A.length];
+    store.set('pairKey', k);
+  }
+  return k;
 }
+const topicOdin = () => 'bastelraum-' + pairKey().toLowerCase() + '-odin';
+const topicTablet = () => 'bastelraum-' + pairKey().toLowerCase() + '-tablet';
+const handyUrl = () => 'https://odinhennig-code.github.io/bastelraum/handy.html#k=' + pairKey();
+async function sendToOdin(text, o) {
+  o = o || {};
+  try {
+    const r = await fetch(NTFY + topicOdin(), { method: 'POST', body: text, headers: { Title: o.title || 'Nachricht von Mama', Priority: String(o.priority || 4), Tags: o.tags || 'speech_balloon' } });
+    if (!r.ok) throw new Error(r.status);
+    return true;
+  } catch (e) { say('Nachricht konnte nicht gesendet werden – kein Internet?'); return false; }
+}
+let inbox = null;
+function listenHandy() {
+  try {
+    if (inbox) inbox.close();
+    inbox = new EventSource(NTFY + topicTablet() + '/sse');
+    inbox.onmessage = (e) => { try { const m = JSON.parse(e.data); if (m.event === 'message' && m.message) receiveMessage(m.message); } catch (x) {} };
+  } catch (e) {}
+}
+listenHandy();
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (!inbox || inbox.readyState === 2)) listenHandy(); });
 QUICK.forEach((t) => {
   const b = document.createElement('button');
   b.className = 'gb'; b.style.cssText = 'height:52px;border-radius:16px;font-size:14px;font-weight:500';
@@ -605,7 +635,7 @@ QUICK.forEach((t) => {
 });
 let calledAt = '', callT;
 $('callBtn').onclick = () => {
-  sndCall(); sendToOdin('Komm mal!'); calledAt = hhmm(new Date());
+  sndCall(); sendToOdin('Komm bitte in den Bastelraum.', { title: 'Mama ruft dich!', priority: 5, tags: 'rotating_light' }); calledAt = hhmm(new Date());
   $('callTitle').textContent = 'Gerufen!';
   $('callSub').textContent = 'um ' + calledAt + ' · nochmal tippen';
   $('callBtn').classList.remove('pulse');
@@ -623,7 +653,7 @@ $('callBtn').onclick = () => {
 let msg = null;
 function receiveMessage(text) { msg = { text, at: hhmm(new Date()) }; sndMsg(); renderMsg(); if (view.startsWith('night')) show('home'); }
 function closeMsg(reply) {
-  if (reply) { sndSend(); sendToOdin(reply); say('Antwort gesendet: „' + reply + '“'); } else sndTap();
+  if (reply) { sndSend(); sendToOdin(reply, { title: 'Antwort von Mama', priority: 3, tags: 'white_check_mark' }); say('Antwort gesendet: „' + reply + '“'); } else sndTap();
   msg = null; renderMsg();
 }
 function renderMsg() {
@@ -1360,7 +1390,7 @@ function luigiDo(raw) {
     if (m && m[1] && m[1].trim().length > 1) {
       let msgTxt = m[1].trim().replace(/\s+aus$/i, '');
       if (/^dass\s/i.test(raw.slice(raw.toLowerCase().indexOf('odin') + 4).trim().replace(/^,\s*/, ''))) msgTxt = dassToMain(msgTxt);
-      sendToOdin(msgTxt); sndSend();
+      sendToOdin(msgTxt, { title: 'Nachricht von Mama' }); sndSend();
       return 'Ich hab Odin geschrieben: „' + msgTxt.charAt(0).toUpperCase() + msgTxt.slice(1) + '“';
     }
     $('callBtn').click(); return 'Ich rufe Odin für dich.';
@@ -1416,7 +1446,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '1.9.1';
+const APP_VERSION = '2.0.0';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -1461,13 +1491,14 @@ const SET_ICONS = {
   reload: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',
   voice: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3"/>',
   tts: '<path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6"/>',
+  handy: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
   move: '<path d="M5 12h14M13 6l6 6-6 6"/><circle cx="5" cy="12" r="2"/>',
   update: '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>'
 };
 function openSettings() {
   const tiles = [
     ['wifi', 'WLAN'], ['bluetooth', 'Bluetooth'], ['sound', 'Ton'],
-    ['display', 'Bildschirm'], ['voice', store.get('luigiVoice', true) ? 'Luigi spricht: an' : 'Luigi spricht: aus'], ['move', store.get('luigiMove', true) ? 'Luigi bewegt sich: an' : 'Luigi bewegt sich: aus'], ['tts', 'Luigis Stimme wählen'],
+    ['handy', 'Handy verbinden'], ['display', 'Bildschirm'], ['voice', store.get('luigiVoice', true) ? 'Luigi spricht: an' : 'Luigi spricht: aus'], ['move', store.get('luigiMove', true) ? 'Luigi bewegt sich: an' : 'Luigi bewegt sich: aus'], ['tts', 'Luigis Stimme wählen'],
     ['update', 'Nach Updates suchen'], ['all', 'Alle Einstellungen'], ['reload', 'Dashboard neu laden']
   ];
   const appV = window.BastelOS && BastelOS.version ? BastelOS.version() : '–';
@@ -1478,6 +1509,7 @@ function openSettings() {
   $('sheetBox').querySelectorAll('[data-set]').forEach((b) => b.onclick = () => {
     const k = b.dataset.set; sndTap();
     if (k === 'reload') { location.replace(location.pathname + '?t=' + Date.now()); return; }
+    if (k === 'handy') { openPairing(); return; }
     if (k === 'move') { const on = !store.get('luigiMove', true); store.set('luigiMove', on); if (!on && B.away) buddyHome(true); openSettings(); return; }
     if (k === 'voice') { store.set('luigiVoice', !store.get('luigiVoice', true)); openSettings(); return; }
     if (k === 'update') { closeSheet(); say('Suche nach Updates …'); updating = false; checkUpdate().then(() => { if (!updating) say('Alles aktuell (Version ' + APP_VERSION + ')'); }); return; }
@@ -1489,6 +1521,37 @@ function openSettings() {
   $('sheet').classList.remove('hidden');
 }
 $('setBtn').onclick = () => { sndTap(); openSettings(); };
+
+function loadQrLib() {
+  return new Promise((res) => {
+    if (window.qrcode) return res(true);
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+    sc.onload = () => res(true); sc.onerror = () => res(false);
+    document.head.appendChild(sc);
+  });
+}
+async function openPairing() {
+  const box = $('sheetBox');
+  box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:24px;font-weight:600">Handy verbinden</span></div>'
+    + '<div style="display:flex;gap:26px;align-items:center">'
+    + '<div id="qrBox" style="flex:none;width:230px;height:230px;border-radius:22px;background:#fff;display:flex;align-items:center;justify-content:center;color:#333;font-size:14px">QR-Code lädt …</div>'
+    + '<div style="display:flex;flex-direction:column;gap:12px;font-size:17px;line-height:1.45">'
+    + '<span>Mit der iPhone-Kamera den Code scannen und den Link öffnen.</span>'
+    + '<span class="muted" style="font-size:15px">Oder auf dem Handy <b>odinhennig-code.github.io/bastelraum/handy.html</b> öffnen und diesen Code eintippen:</span>'
+    + '<span class="num" style="font-size:30px;font-weight:600;letter-spacing:4px;color:#FFC56B">' + esc(pairKey()) + '</span></div></div>'
+    + '<div style="display:flex;gap:10px"><button id="pairTest" class="gb pill" style="flex:1;height:52px;font-size:16px">Test ans Handy</button><button id="sCancel" class="accent pill" style="flex:1;height:52px;font-size:16px">Fertig</button></div>';
+  $('sCancel').onclick = closeSheet;
+  $('pairTest').onclick = async () => { if (await sendToOdin('Test vom Tablet – die Verbindung klappt!', { title: 'Bastelraum', priority: 3, tags: 'tada' })) say('Test ans Handy gesendet'); };
+  $('sheet').classList.remove('hidden');
+  if (await loadQrLib()) {
+    try {
+      const q = qrcode(0, 'M'); q.addData(handyUrl()); q.make();
+      $('qrBox').innerHTML = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+      const sv = $('qrBox').querySelector('svg'); if (sv) { sv.style.width = '206px'; sv.style.height = '206px'; }
+    } catch (e) { $('qrBox').textContent = 'QR-Code nicht verfügbar'; }
+  } else $('qrBox').textContent = 'QR-Code braucht Internet';
+}
 
 /* =========================================================
    WETTER (Standort vom Tablet, Daten von Open-Meteo)

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bastelraum">
+<meta name="theme-color" content="#07080C">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="handy.webmanifest">
+<title>Bastelraum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:#07080C}
+html,body{margin:0;min-height:100%;color:#fff;font-family:Outfit,system-ui,sans-serif}
+body{padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 24px);overflow-x:hidden}
+button,input{font-family:inherit;color:#fff}
+button{cursor:pointer}
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden}
+.bg i{position:absolute;border-radius:50%;animation:drift 18s ease-in-out infinite alternate}
+@keyframes drift{50%{transform:translate(40px,30px) scale(1.1)}100%{transform:translate(-30px,20px) scale(.95)}}
+.glass{background:rgba(255,255,255,.07);-webkit-backdrop-filter:blur(30px) saturate(170%);backdrop-filter:blur(30px) saturate(170%);border:1px solid rgba(255,255,255,.15);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 18px 40px rgba(0,0,0,.35)}
+.gb{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.28);transition:transform .15s,background .2s}
+.gb:active{transform:scale(.94);background:rgba(255,255,255,.2)}
+.accent{border:0;background:linear-gradient(135deg,#FFC56B,#FF7A2F);color:#1A0E00!important;font-weight:600;box-shadow:0 10px 26px rgba(255,140,50,.4)}
+.accent:active{transform:scale(.95)}
+.muted{color:rgba(255,255,255,.65)}
+.card{border-radius:26px;padding:18px}
+.label{font-size:14px;color:rgba(255,255,255,.65)}
+.hidden{display:none!important}
+.fade{animation:fadein .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes fadein{from{opacity:0;transform:translateY(14px)}}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+h1{margin:0;font-size:30px;font-weight:600;letter-spacing:-.5px}
+.dot{width:9px;height:9px;border-radius:50%;background:#555;display:inline-block}
+.dot.on{background:#4ADE80;box-shadow:0 0 10px #4ADE80}
+#alert{border-radius:28px;padding:22px;margin-bottom:14px;background:linear-gradient(135deg,rgba(255,170,60,.35),rgba(255,90,160,.25));border:1px solid rgba(255,200,140,.4);animation:alertPulse 1.4s ease-in-out infinite}
+@keyframes alertPulse{50%{box-shadow:0 0 0 8px rgba(255,150,60,0),0 0 40px rgba(255,140,60,.45)}0%,100%{box-shadow:0 0 0 0 rgba(255,150,60,.5)}}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qgrid button{height:54px;border-radius:16px;font-size:15px;font-weight:500}
+.row{display:flex;gap:8px;align-items:center}
+input.field{flex:1;min-width:0;height:52px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);font-size:17px;padding:0 18px;outline:none}
+input.field::placeholder{color:rgba(255,255,255,.45)}
+.icon{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.mic.on{background:rgba(255,80,80,.35)}
+.msg{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
+.msg.me{background:rgba(255,170,60,.14);border-color:rgba(255,170,60,.25);align-self:flex-end;max-width:85%}
+.msg.mama{align-self:flex-start;max-width:85%}
+.msg small{font-size:12px;color:rgba(255,255,255,.55)}
+.msg span{font-size:16px;line-height:1.35}
+#log{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow:auto;padding:2px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translateX(-50%);padding:12px 18px;border-radius:999px;font-size:15px;z-index:9;background:rgba(30,30,40,.8);animation:drop .4s cubic-bezier(.2,1.4,.4,1) both;white-space:nowrap}
+@keyframes drop{from{opacity:0;transform:translate(-50%,-20px)}}
+code{font-size:15px;background:rgba(255,255,255,.1);padding:3px 8px;border-radius:8px;word-break:break-all}
+ol{margin:6px 0 0;padding-left:20px;line-height:1.55;font-size:15px}
+</style>
+</head>
+<body>
+<div class="bg">
+  <i style="width:420px;height:420px;left:-140px;top:-120px;background:radial-gradient(closest-side,#C8701A,#C8701A00);opacity:.6"></i>
+  <i style="animation-delay:-6s;width:420px;height:420px;right:-160px;top:220px;background:radial-gradient(closest-side,#2F4FD8,#2F4FD800);opacity:.55"></i>
+  <i style="animation-delay:-12s;width:380px;height:380px;left:-60px;bottom:-160px;background:radial-gradient(closest-side,#8A3FD1,#8A3FD100);opacity:.45"></i>
+</div>
+
+<!-- ============ Verbinden ============ -->
+<section id="vPair" class="stack hidden">
+  <header><h1>Bastelraum</h1></header>
+  <div class="glass card fade stack">
+    <span style="font-size:22px;font-weight:600">Mit dem Tablet verbinden</span>
+    <span class="muted" style="font-size:16px;line-height:1.45">Am Tablet auf das <b>Zahnrad</b> tippen und <b>„Handy verbinden“</b> wählen. Dann den QR-Code mit der iPhone-Kamera scannen – oder den Code hier eintippen:</span>
+    <div class="row">
+      <input id="pairInput" class="field" placeholder="Code vom Tablet" autocomplete="off" autocapitalize="characters">
+      <button id="pairBtn" class="accent" style="height:52px;border-radius:999px;padding:0 20px;font-size:16px">Verbinden</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Hauptansicht ============ -->
+<section id="vMain" class="stack hidden">
+  <header>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <h1>Bastelraum</h1>
+      <span class="muted" style="font-size:14px;display:flex;align-items:center;gap:7px"><span id="liveDot" class="dot"></span><span id="liveTxt">Verbinde …</span></span>
+    </div>
+    <button id="setBtn" class="gb icon" aria-label="Einstellungen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </header>
+
+  <div id="alert" class="hidden fade">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      <div style="display:flex;flex-direction:column"><span id="alertTitle" style="font-size:22px;font-weight:600">Mama ruft dich!</span><span id="alertTime" class="muted" style="font-size:14px"></span></div>
+    </div>
+    <div class="row">
+      <button class="accent" data-reply="Komme sofort!" style="flex:1;height:50px;border-radius:999px;font-size:16px">Komme sofort</button>
+      <button class="gb" data-reply="Komme in 5 Minuten" style="flex:1;height:50px;border-radius:999px;font-size:16px">5 Minuten</button>
+    </div>
+  </div>
+
+  <div class="glass card fade stack" style="animation-delay:.05s">
+    <span class="label">An Mamas Tablet schicken</span>
+    <div class="qgrid" id="quick"></div>
+    <div class="row">
+      <input id="txt" class="field" placeholder="Eigene Nachricht …" autocomplete="off">
+      <button class="gb icon mic" id="micBtn" aria-label="Spracheingabe"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button class="accent icon" id="sendBtn" aria-label="Senden"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A0E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg></button>
+    </div>
+  </div>
+
+  <div class="glass card fade stack" style="animation-delay:.1s">
+    <span class="label">Verlauf</span>
+    <div id="log"></div>
+  </div>
+</section>
+
+<!-- ============ Einstellungen ============ -->
+<section id="vSet" class="stack hidden">
+  <header><h1>Einstellungen</h1><button id="setBack" class="gb" style="height:44px;border-radius:999px;padding:0 18px;font-size:15px">Fertig</button></header>
+  <div class="glass card fade stack">
+    <span style="font-size:19px;font-weight:600">Push aufs iPhone</span>
+    <span class="muted" style="font-size:15px;line-height:1.45">Damit du auch Bescheid bekommst, wenn diese Seite zu ist:</span>
+    <ol>
+      <li>Die kostenlose App <b>ntfy</b> aus dem App Store laden</li>
+      <li>In ntfy auf <b>+</b> tippen</li>
+      <li>Dieses Thema eintragen (Server bleibt <b>ntfy.sh</b>):</li>
+    </ol>
+    <div class="row"><code id="topicTxt" style="flex:1"></code><button id="copyTopic" class="gb" style="height:44px;border-radius:999px;padding:0 16px;font-size:14px">Kopieren</button></div>
+    <span class="muted" style="font-size:14px">Tipp: Diese Seite über „Teilen → Zum Home-Bildschirm“ als App speichern.</span>
+  </div>
+  <div class="glass card fade stack" style="animation-delay:.05s">
+    <span style="font-size:19px;font-weight:600">Verbindung</span>
+    <span class="muted" style="font-size:15px">Verbunden mit Code <code id="codeTxt"></code></span>
+    <button id="testBtn" class="gb" style="height:50px;border-radius:999px;font-size:15px">Test-Nachricht ans Tablet</button>
+    <button id="unpair" class="gb" style="height:50px;border-radius:999px;font-size:15px;color:#FF9A80">Verbindung trennen</button>
+  </div>
+</section>
+
+<script>
+{
+const NTFY = 'https://ntfy.sh/';
+const $ = (id) => document.getElementById(id);
+const p2 = (n) => String(n).padStart(2, '0');
+const hhmm = (d) => p2(d.getHours()) + ':' + p2(d.getMinutes());
+const store = {
+  get: (k, d) => { try { const v = localStorage.getItem('bastelHandy_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set: (k, v) => { try { localStorage.setItem('bastelHandy_' + k, JSON.stringify(v)); } catch (e) {} }
+};
+let key = null, es = null;
+
+function toast(t) {
+  const el = document.createElement('div'); el.className = 'toast glass'; el.textContent = t;
+  document.body.appendChild(el); setTimeout(() => el.remove(), 2400);
+}
+function show(v) { ['vPair', 'vMain', 'vSet'].forEach((id) => $(id).classList.toggle('hidden', id !== v)); }
+const cleanKey = (k) => String(k || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+const topicOdin = () => 'bastelraum-' + key.toLowerCase() + '-odin';
+const topicTablet = () => 'bastelraum-' + key.toLowerCase() + '-tablet';
+
+/* ---------- Verbinden ---------- */
+function pair(k) {
+  k = cleanKey(k);
+  if (k.length < 8) { toast('Der Code ist zu kurz'); return; }
+  key = k; store.set('key', k);
+  history.replaceState(null, '', location.pathname);
+  start();
+}
+$('pairBtn').onclick = () => pair($('pairInput').value);
+$('pairInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') pair($('pairInput').value); });
+
+/* ---------- Verlauf ---------- */
+let log = store.get('log', []);
+function addLog(who, text, time, id) {
+  if (id && log.some((m) => m.id === id)) return false;
+  log.push({ who, text, time: time || Date.now(), id: id || null });
+  log = log.slice(-60); store.set('log', log); renderLog(); return true;
+}
+function renderLog() {
+  const el = $('log');
+  if (!log.length) { el.innerHTML = '<span class="muted" style="font-size:15px;text-align:center;padding:16px 0">Noch keine Nachrichten</span>'; return; }
+  el.innerHTML = '';
+  log.forEach((m) => {
+    const d = document.createElement('div'); d.className = 'msg ' + (m.who === 'me' ? 'me' : 'mama');
+    const sm = document.createElement('small'); sm.textContent = (m.who === 'me' ? 'Du' : 'Mama') + ' · ' + new Date(m.time).toLocaleString('de-DE', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+    const sp = document.createElement('span'); sp.textContent = m.text;
+    d.appendChild(sm); d.appendChild(sp); el.appendChild(d);
+  });
+  el.scrollTop = el.scrollHeight;
+}
+
+/* ---------- Senden ---------- */
+async function send(text) {
+  text = String(text || '').trim(); if (!text) return;
+  try {
+    const r = await fetch(NTFY + topicTablet(), { method: 'POST', body: text, headers: { Title: 'Odin' } });
+    if (!r.ok) throw new Error(r.status);
+    addLog('me', text); toast('Gesendet ✓');
+    if (navigator.vibrate) navigator.vibrate(20);
+  } catch (e) { toast('Senden hat nicht geklappt'); }
+}
+const QUICK = ['Essen ist fertig!', 'Komme gleich', 'Paket ist da', 'Brauchst du was?'];
+QUICK.forEach((t) => {
+  const b = document.createElement('button'); b.className = 'gb'; b.textContent = t;
+  b.onclick = () => send(t); $('quick').appendChild(b);
+});
+$('sendBtn').onclick = () => { send($('txt').value); $('txt').value = ''; };
+$('txt').addEventListener('keydown', (e) => { if (e.key === 'Enter') { send($('txt').value); $('txt').value = ''; } });
+document.querySelectorAll('[data-reply]').forEach((b) => b.onclick = () => { send(b.dataset.reply); $('alert').classList.add('hidden'); });
+
+/* ---------- Spracheingabe ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+$('micBtn').onclick = () => {
+  if (!SR) { $('txt').focus(); toast('Tipp aufs Mikrofon der Tastatur'); return; }
+  const rec = new SR(); rec.lang = 'de-DE'; rec.interimResults = true;
+  $('micBtn').classList.add('on');
+  rec.onresult = (e) => { let t = ''; for (const r of e.results) t += r[0].transcript; $('txt').value = t.charAt(0).toUpperCase() + t.slice(1); };
+  rec.onend = () => $('micBtn').classList.remove('on');
+  rec.onerror = () => $('micBtn').classList.remove('on');
+  rec.start();
+};
+
+/* ---------- Empfangen (live) ---------- */
+function handleIncoming(m) {
+  if (!m || m.event !== 'message') return;
+  const isNew = addLog('mama', m.message, m.time * 1000, m.id);
+  const fresh = Date.now() - m.time * 1000 < 10 * 60 * 1000;
+  if (isNew && fresh && (m.priority >= 4 || /ruft/i.test(m.title || ''))) {
+    $('alertTitle').textContent = m.title || 'Mama ruft dich!';
+    $('alertTime').textContent = 'um ' + hhmm(new Date(m.time * 1000));
+    $('alert').classList.remove('hidden');
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  }
+}
+function setLive(on) { $('liveDot').classList.toggle('on', on); $('liveTxt').textContent = on ? 'Verbunden mit dem Bastelraum' : 'Keine Verbindung – versuche es weiter …'; }
+async function loadHistory() {
+  try {
+    const r = await fetch(NTFY + topicOdin() + '/json?poll=1&since=24h');
+    const txt = await r.text();
+    txt.split('\n').filter(Boolean).forEach((l) => { try { handleIncoming(JSON.parse(l)); } catch (e) {} });
+  } catch (e) {}
+}
+function listen() {
+  if (es) es.close();
+  es = new EventSource(NTFY + topicOdin() + '/sse');
+  es.onopen = () => setLive(true);
+  es.onerror = () => setLive(false);
+  es.onmessage = (e) => { try { handleIncoming(JSON.parse(e.data)); } catch (x) {} };
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && key) { loadHistory(); if (!es || es.readyState === 2) listen(); } });
+
+/* ---------- Einstellungen ---------- */
+$('setBtn').onclick = () => { $('topicTxt').textContent = topicOdin(); $('codeTxt').textContent = key; show('vSet'); };
+$('setBack').onclick = () => show('vMain');
+$('copyTopic').onclick = async () => { try { await navigator.clipboard.writeText(topicOdin()); toast('Kopiert'); } catch (e) { toast('Bitte von Hand abschreiben'); } };
+$('testBtn').onclick = () => send('Test vom Handy – alles klappt!');
+$('unpair').onclick = () => { if (es) es.close(); key = null; store.set('key', null); log = []; store.set('log', []); show('vPair'); };
+
+/* ---------- Start ---------- */
+function start() {
+  show('vMain'); renderLog(); loadHistory(); listen();
+}
+const fromLink = (location.hash.match(/k=([A-Za-z0-9]+)/) || [])[1];
+key = store.get('key', null);
+if (fromLink) pair(fromLink);
+else if (key) start();
+else show('vPair');
+}
+</script>
+</body>
+</html>
