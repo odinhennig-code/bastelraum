@@ -1127,7 +1127,9 @@ async function whisperListen() {
   let cancelled = false;
   const ctl = { onLevel: (lv) => { $('lGlow').style.setProperty('--lv', lv.toFixed(2)); const d = document.querySelector('.ldots'); if (d) d.style.setProperty('--lv', lv.toFixed(2)); } };
   L.rec = { stop: () => { cancelled = true; if (ctl.stop) ctl.stop(); } };
+  const vol0 = player.volume; if (playing) player.volume = Math.min(vol0, 0.12);   // Radio beim Zuhören leiser
   const r = await recordSpeech(ctl);
+  if (playing) player.volume = vol0;
   L.rec = null;
   if (!r) return false;
   if (cancelled || !L.open) return true;
@@ -1839,7 +1841,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.6.3';
+const APP_VERSION = '2.6.4';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
