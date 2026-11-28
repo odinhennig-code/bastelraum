@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#07080C">
 <title>Bastelraum</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 /* ---------- Grundlagen ---------- */
 *{box-sizing:border-box}
@@ -16,6 +16,59 @@ html,body{margin:0;height:100%;background:#07080C;overflow:hidden;-webkit-tap-hi
 body{font-family:Outfit,system-ui,sans-serif;color:#fff}
 button,input{font-family:inherit;color:#fff}
 button{cursor:pointer}
+#adm{position:absolute;inset:0;z-index:950;background:#05070B;color:#D6E2EE;font-family:'JetBrains Mono',ui-monospace,monospace;--c:#FF8A3D;transition:opacity .3s;overflow:hidden}
+#adm.out{opacity:0}
+#adm::before{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),radial-gradient(1200px 500px at 20% -10%,color-mix(in srgb,var(--c) 14%,transparent),transparent 70%);z-index:2}
+#adm .aBoot{position:absolute;inset:0;padding:60px 70px;font-size:16px;line-height:1.9;color:#7CFF8A;display:none;z-index:3;background:#05070B}
+#adm.booting .aBoot{display:block}
+#adm .aUi{position:absolute;inset:0;display:flex;flex-direction:column;padding:18px 22px 12px;gap:14px}
+#adm .aTop{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px}
+#adm .aBrand{display:flex;align-items:center;gap:14px}
+#adm .aGlyph{color:var(--c);font-size:26px;text-shadow:0 0 14px var(--c);transition:color .3s}
+#adm .aBrand b{display:block;font-size:17px;letter-spacing:3px;color:#fff}
+#adm .aBrand i{display:block;font-style:normal;font-size:11.5px;letter-spacing:1px;color:#6F8193;margin-top:3px}
+#adm .aStat{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:13px}
+#adm #aClock{font-size:22px;color:#fff;letter-spacing:2px}
+#adm .aRec{color:#FF4D5E;font-size:11px;letter-spacing:2px;animation:aBl 1.4s infinite}
+@keyframes aBl{50%{opacity:.35}}
+#adm .aBody{flex:1;display:grid;grid-template-columns:230px 1fr 260px;gap:16px;min-height:0}
+#adm .aNav{display:flex;flex-direction:column;gap:6px}
+#adm .aCat{all:unset;cursor:pointer;display:grid;grid-template-columns:44px 1fr auto;align-items:center;padding:12px 12px;border:1px solid rgba(255,255,255,.06);border-radius:8px;background:rgba(255,255,255,.02);font-size:13.5px;color:#9FB0C2;transition:all .2s}
+#adm .aCat .k{color:var(--c);font-weight:700;letter-spacing:1px;font-size:12px}
+#adm .aCat .cnt{font-size:11px;color:#56687A}
+#adm .aCat.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);color:#fff;box-shadow:inset 3px 0 0 var(--c)}
+#adm .aMain{display:flex;flex-direction:column;gap:12px;min-height:0}
+#adm .aHead{font-size:20px;color:#fff;letter-spacing:1px;display:flex;align-items:baseline;gap:10px}
+#adm .aHead .k{color:var(--c)}
+#adm .aHead em{font-style:normal;font-size:12px;color:#5D6F81;margin-left:auto;letter-spacing:2px;text-transform:uppercase}
+#adm .aGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;overflow:auto;padding:2px 4px 4px 2px;align-content:start}
+#adm .aIt{all:unset;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:5px;padding:13px 14px 12px;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));transition:border-color .15s,background .15s,transform .15s;overflow:hidden}
+#adm .aIt .id{font-size:10.5px;color:#56687A;letter-spacing:2px}
+#adm .aIt b{font-size:15.5px;font-weight:600;color:#E8F0F8}
+#adm .aIt .d{font-size:12px;color:#7A8C9E}
+#adm .aIt .bar{height:3px;border-radius:2px;background:rgba(255,255,255,.06);margin-top:4px;overflow:hidden}
+#adm .aIt .bar u{display:block;height:100%;width:0;background:var(--c);box-shadow:0 0 10px var(--c);transition:width .4s}
+#adm .aIt .st{font-size:11px;letter-spacing:1px;color:var(--c);min-height:14px}
+#adm .aIt.sel{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,transparent);box-shadow:0 0 0 1px var(--c),0 0 24px color-mix(in srgb,var(--c) 25%,transparent)}
+#adm .aIt.sel::after{content:'▶';position:absolute;right:12px;top:12px;font-size:11px;color:var(--c)}
+#adm .aIt.warn .id::after{content:'  ⚠ KRITISCH';color:#FF4D5E}
+#adm .aIt.arm{border-color:#FF4D5E;box-shadow:0 0 0 1px #FF4D5E,0 0 24px rgba(255,77,94,.35);animation:aBl .7s infinite}
+#adm .aIt.arm .st{color:#FF4D5E}
+#adm .aIt.done .st{color:#7CFF8A}#adm .aIt.done .bar u{background:#7CFF8A;box-shadow:0 0 10px #7CFF8A}
+#adm .aIt.bad .st{color:#FF4D5E}#adm .aIt.bad .bar u{background:#FF4D5E;box-shadow:0 0 10px #FF4D5E}
+#adm .aSide{display:flex;flex-direction:column;gap:10px;min-height:0}
+#adm .aGauges{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#adm .aG{padding:10px;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:4px}
+#adm .aG span{font-size:10.5px;letter-spacing:2px;color:#6F8193}
+#adm .aG b{font-size:19px;color:#fff;font-weight:500}
+#adm .aG i{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+#adm .aG u{display:block;height:100%;background:var(--c);transition:width .8s}
+#adm .aLogT{font-size:10.5px;letter-spacing:3px;color:#56687A;margin-top:4px}
+#adm .aLog{flex:1;overflow:hidden;font-size:11.5px;line-height:1.6;color:#9FB0C2;border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px 10px;background:rgba(0,0,0,.35)}
+#adm .aLog .dim{color:#4A5B6C}#adm .aLog .ok{color:#7CFF8A}#adm .aLog .e{color:#FF4D5E}#adm .aLog .w{color:#FFD24D}
+#adm .aFoot{display:flex;gap:26px;font-size:10.5px;letter-spacing:2px;color:#4A5B6C;border-top:1px solid rgba(255,255,255,.06);padding-top:9px}
+#adm .aFoot .aHex{margin-left:auto;color:#5D6F81}
+#adm.hidden{display:none}
 #lOff{position:absolute;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;background:rgba(5,6,10,0);transition:background .35s,opacity .4s;pointer-events:auto}
 #lOff.on{background:rgba(5,6,10,.88)}
 #lOff.out{opacity:0}
@@ -1573,7 +1626,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.1.5';
+const APP_VERSION = '2.2.0';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -1747,6 +1800,208 @@ setInterval(() => {
 
 /* Start */
 renderMsg(); renderRadio(); renderMats(); show('home');
+
+/* =========================================================
+   ADMIN-KONSOLE  (3× Lauter in der App · 5× auf „Hallo Mama“ tippen)
+   Sieht kompliziert aus – ist es nicht. Das meiste ist Show.
+   ========================================================= */
+(function () {
+  const A = { open: false, cat: 0, sel: 0, busy: false, t: [] };
+  const INFO = (() => { try { return window.BastelOS && BastelOS.deviceInfo ? JSON.parse(BastelOS.deviceInfo()) : null; } catch (e) { return null; } })();
+  const real = (i) => () => {
+    if (window.BastelOS && BastelOS.systemAction) { closeAdmin(); setTimeout(() => BastelOS.systemAction(i), 250); return 'Befehl an Systemkern übergeben'; }
+    if (i === 0) { closeAdmin(); return ''; }
+    if (i === 1) { setTimeout(() => location.reload(), 900); return 'Neustart der Oberfläche …'; }
+    if (i === 2) { closeAdmin(); window.bastelCheckUpdate && window.bastelCheckUpdate(); return ''; }
+    if (i === 3 && window.BastelOS && BastelOS.openSettings) { closeAdmin(); BastelOS.openSettings('all'); return ''; }
+    if (window.BastelOS && BastelOS.openRecovery) { closeAdmin(); BastelOS.openRecovery(); return ''; }
+    return 'E: Nur in der Tablet-App verfügbar';
+  };
+  const CATS = [
+    { k: 'SYS', n: 'Systemsteuerung', c: '#FF8A3D', items: [
+      ['Zurück zum Dashboard', 'Konsole schließen und Oberfläche freigeben', real(0), 'exit'],
+      ['Oberfläche neu initialisieren', 'Dashboard komplett neu laden', real(1)],
+      ['Update-Kanal abfragen', 'Nach neuer Version suchen', real(2)],
+      ['Android-Subsystem', 'Normale Android-Einstellungen öffnen', real(3), 'warn'],
+      ['Kiosk-Modus verlassen', 'App beenden, normales Android zeigen', real(4), 'warn'],
+      ['Display-Schlafbefehl', 'Bildschirm sofort ausschalten', real(5)],
+      ['Kaltstart einleiten', 'Tablet neu starten', real(6), 'warn'],
+      ['Low-Level-Recovery', 'Klassisches Notfallmenü öffnen', () => { closeAdmin(); if (window.BastelOS && BastelOS.openRecovery) BastelOS.openRecovery(); return ''; }, 'warn'],
+    ] },
+    { k: 'KRN', n: 'Kernel & Speicher', c: '#4FD1FF', items: [
+      ['Kernel-Matrix kalibrieren', 'Thread-Scheduler neu ausrichten', fake(['Lade Scheduler-Tabelle', 'Prüfe 4 Kerne', 'Richte Zeitscheiben aus', 'Matrix stabil'])],
+      ['Quantencache leeren', 'Zwischenspeicher-Sektoren freigeben', fake(['Scanne 0x0000–0xFFFF', 'Verwerfe 2.341 Blöcke', 'Cache kohärent'])],
+      ['Speicherblöcke defragmentieren', 'Fragmentierung: 12,4 %', fake(['Analysiere Belegung', 'Verschiebe Segmente', 'Fragmentierung 0,0 %'])],
+      ['Thermische Drosselung', 'Profil: ausgewogen', fake(['Lese Sensoren T0–T3', 'Setze Lüfterkurve (virtuell)', 'Profil: leise'])],
+      ['Prozessorkerne synchronisieren', 'Taktdrift ausgleichen', fake(['Messe Drift', 'Gleiche 0,003 ms aus', 'Kerne synchron'])],
+      ['Interrupt-Vektoren prüfen', 'IRQ-Tabelle validieren', fake(['Lade IRQ 0–255', 'Prüfsummen ok', 'Keine Konflikte'])],
+    ] },
+    { k: 'NET', n: 'Netz & Uplink', c: '#7CFF8A', items: [
+      ['Uplink zu Odin prüfen', 'Echte Verbindung zum Handy testen', uplink],
+      ['Firewall Ω aktivieren', 'Eingehende Pakete versiegeln', fake(['Lade Regelwerk Ω', '1.024 Regeln aktiv', 'Firewall Ω scharf'])],
+      ['Paket-Tunnel versiegeln', 'Ende-zu-Ende-Kanal härten', fake(['Handshake', 'Schlüsseltausch 4096 bit', 'Tunnel versiegelt'])],
+      ['Signal triangulieren', 'WLAN-Feldstärke vermessen', fake(['Sende Peilsignal', 'Empfange 3 Echos', 'Position fixiert'])],
+      ['DNS-Schild', 'Namensauflösung absichern', fake(['Prüfe Resolver', 'Schild aktiv'])],
+      ['Funkstille', 'Alle Sender drosseln (Simulation)', fake(['Drossle Sender', 'Funkstille hergestellt', 'Wieder freigegeben'])],
+    ] },
+    { k: 'LGI', n: 'Luigi · KI-Kern', c: '#C38BFF', items: [
+      ['Neuronales Netz nachtrainieren', 'Bewegungsmuster optimieren', fake(['Lade 57 Verhaltensmuster', 'Epoche 1/3', 'Epoche 2/3', 'Epoche 3/3', 'Verlust 0,0012'])],
+      ['Persönlichkeitskern sichern', 'Snapshot von Luigi anlegen', fake(['Serialisiere Kern', 'Schreibe Snapshot #7', 'Gesichert'])],
+      ['Bewegungs-KI zurücksetzen', 'Luigi an den Rand holen', () => { try { if (typeof buddyHome === 'function') buddyHome(true); } catch (e) {} return fakeRun(['Sende Rückruf-Signal', 'Luigi angedockt']); }],
+      ['Sprachmodul abgleichen', 'Stimme & Weckwort prüfen', fake(['Prüfe Weckwort „Hey Luigi“', 'Prüfe Sprachausgabe', 'Module bereit'])],
+      ['Traum-Modus', 'Luigi träumen lassen (Simulation)', fake(['Senke Aktivität', 'REM-Phase', 'Luigi ist erholt'])],
+    ] },
+    { k: 'SEC', n: 'Sicherheit', c: '#FF4D5E', items: [
+      ['Eindringlings-Scan', 'Alle Sektoren auf Fremdzugriff prüfen', fake(['Scanne Prozesse', 'Scanne Speicher', 'Scanne Ports', '0 Bedrohungen'])],
+      ['Verschlüsselung AES-4096', 'Datentresor neu verschlüsseln', fake(['Erzeuge Schlüssel', 'Verschlüssele Tresor', 'Tresor versiegelt'])],
+      ['Biometrie-Sperre', 'Status: nicht eingerichtet', fake(['Suche Sensor', 'E: Kein Sensor gefunden'], true)],
+      ['Zugriffsprotokoll', 'Letzte Anmeldungen anzeigen', fake(['Odin · Stufe 7 · jetzt', 'Mama · Stufe 1 · täglich', 'Luigi · Stufe 3 · immer'])],
+      ['Selbstzerstörung', 'Nur mit Odin-Freigabe', fake(['Prüfe Freigabe …', 'ZUGRIFF VERWEIGERT', 'Freigabe nur durch Odin'], true), 'warn'],
+    ] },
+    { k: 'DGN', n: 'Diagnose', c: '#FFD24D', items: [
+      ['Systembericht', 'Gerät, Versionen, Rechte', report],
+      ['Vollständige Diagnose', 'Alle Module testen', fake(['Kern ok', 'Speicher ok', 'Netz ok', 'Audio ok', 'Kamera ok', 'Luigi ok', 'System gesund'])],
+      ['Sensor-Telemetrie', 'Live-Messwerte einfrieren', fake(['Friere Puffer ein', 'Schreibe 512 Messpunkte', 'Telemetrie gesichert'])],
+      ['Protokolle archivieren', 'Logbuch komprimieren', fake(['Packe 3 Logdateien', 'Archiv 41 KB', 'Archiviert'])],
+    ] },
+  ];
+  function fake(lines, fail) { return () => fakeRun(lines, fail); }
+  function fakeRun(lines, fail) { return { lines, fail }; }
+  function uplink() {
+    const t0 = Date.now();
+    const p = fetch('https://ntfy.sh/v1/health', { cache: 'no-store' }).then((r) => r.ok).catch(() => false);
+    return { lines: ['Öffne Kanal zu ntfy.sh', 'Messe Laufzeit'], wait: p.then((ok) => ok ? ['Antwort in ' + (Date.now() - t0) + ' ms', 'Uplink stabil'] : ['E: Keine Antwort', 'Uplink gestört – Internet prüfen']), };
+  }
+  function report() {
+    const d = INFO || {};
+    return { lines: [
+      'Dashboard ' + APP_VERSION + '  ·  App ' + (d.app || 'Browser'),
+      d.model ? 'Gerät: ' + d.model : 'Gerät: Browser-Vorschau',
+      d.android ? 'Android ' + d.android + ' (API ' + d.sdk + ')' : 'Android: –',
+      d.build ? 'Build ' + d.build : 'Build: –',
+      'Geräte-Admin: ' + (d.admin ? 'aktiv' : 'aus') + '  ·  Geräte-Chef: ' + (d.owner ? 'ja' : 'nein'),
+    ], instant: true };
+  }
+
+  /* ---------- Aufbau ---------- */
+  const el = document.createElement('div'); el.id = 'adm'; el.className = 'hidden';
+  el.innerHTML = '<div class="aBoot"></div><div class="aUi"><div class="aTop"><div class="aBrand"><span class="aGlyph">◢◤</span><div><b>BASTELRAUM // SYSTEMKERN</b><i>Notfall-Administration · Zugriffsstufe 7 · nur autorisiertes Personal</i></div></div><div class="aStat"><span id="aClock">--:--:--</span><span class="aRec">● SITZUNG AKTIV</span></div></div>'
+    + '<div class="aBody"><nav class="aNav"></nav><main class="aMain"><div class="aHead"></div><div class="aGrid"></div></main><aside class="aSide"><div class="aGauges"></div><div class="aLogT">SYSTEMPROTOKOLL</div><div class="aLog"></div></aside></div>'
+    + '<div class="aFoot"><span>LAUTER/LEISER · AUSWÄHLEN</span><span>LAUTER HALTEN · AUSFÜHREN</span><span>ANTIPPEN · AUSFÜHREN</span><span class="aHex"></span></div></div>';
+  $('stage').appendChild(el);
+  const nav = el.querySelector('.aNav'), grid = el.querySelector('.aGrid'), head = el.querySelector('.aHead'), logEl = el.querySelector('.aLog'), gauges = el.querySelector('.aGauges');
+  CATS.forEach((c, i) => {
+    const b = document.createElement('button'); b.className = 'aCat'; b.style.setProperty('--c', c.c);
+    b.innerHTML = '<span class="k">' + c.k + '</span><span class="n">' + c.n + '</span><span class="cnt">' + String(c.items.length).padStart(2, '0') + '</span>';
+    b.onclick = () => { A.cat = i; A.sel = 0; render(); tick(); };
+    nav.appendChild(b);
+  });
+  const G = [['CPU', '%'], ['RAM', '%'], ['TEMP', '°C'], ['UPLINK', 'ms']];
+  gauges.innerHTML = G.map((g) => '<div class="aG"><span>' + g[0] + '</span><b>--</b><i><u></u></i></div>').join('');
+
+  function log(t, cls) {
+    const d = new Date(), ts = [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
+    const r = document.createElement('div'); if (cls) r.className = cls;
+    r.textContent = ts + '  ' + t; logEl.appendChild(r);
+    while (logEl.children.length > 40) logEl.firstChild.remove();
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  function render() {
+    const c = CATS[A.cat];
+    [...nav.children].forEach((b, i) => b.classList.toggle('on', i === A.cat));
+    el.style.setProperty('--c', c.c);
+    head.innerHTML = '<span class="k">' + c.k + ' /</span> ' + c.n + '<em>' + c.items.length + ' Module</em>';
+    grid.innerHTML = '';
+    c.items.forEach((it, i) => {
+      const b = document.createElement('button'); b.className = 'aIt' + (it[3] ? ' ' + it[3] : '') + (i === A.sel ? ' sel' : '');
+      b.innerHTML = '<span class="id">' + c.k + '-' + String(i + 1).padStart(2, '0') + '</span><b>' + it[0] + '</b><span class="d">' + it[1] + '</span><span class="bar"><u></u></span><span class="st"></span>';
+      b.onclick = () => { if (A.sel === i) run(i); else { A.sel = i; paintSel(); tick(); } };
+      grid.appendChild(b);
+    });
+  }
+  function paintSel() { [...grid.children].forEach((b, i) => b.classList.toggle('sel', i === A.sel)); const s = grid.children[A.sel]; if (s && s.scrollIntoView) s.scrollIntoView({ block: 'nearest' }); }
+
+  async function run(i) {
+    if (A.busy) return;
+    const it = CATS[A.cat].items[i], b = grid.children[i];
+    if (it[3] === 'warn' && !b.classList.contains('arm')) { b.classList.add('arm'); b.querySelector('.st').textContent = 'NOCHMAL ZUM BESTÄTIGEN'; log('Warnung: ' + it[0] + ' – Bestätigung nötig', 'w'); try { sndTap(); } catch (e) {} setTimeout(() => { b.classList.remove('arm'); b.querySelector('.st').textContent = ''; }, 3500); return; }
+    b.classList.remove('arm');
+    log('> ' + it[0]); try { sndTap(); } catch (e) {}
+    const r = it[2]();
+    if (!r) return;
+    if (typeof r === 'string') { log(r); return; }
+    A.busy = true; b.classList.add('run'); const bar = b.querySelector('.bar u'), st = b.querySelector('.st');
+    let lines = r.lines.slice(); const step = r.instant ? 120 : 520;
+    for (let k = 0; k < lines.length; k++) {
+      if (!A.open) break;
+      st.textContent = lines[k]; log('  ' + lines[k], /^E:|VERWEIGERT/.test(lines[k]) ? 'e' : '');
+      bar.style.width = Math.round((k + 1) / (lines.length + (r.wait ? 2 : 0)) * 100) + '%';
+      await new Promise((z) => setTimeout(z, step + Math.random() * 260));
+      if (k === lines.length - 1 && r.wait) { const more = await r.wait; r.wait = null; lines = lines.concat(more); }
+    }
+    bar.style.width = '100%';
+    const bad = r.fail || /^E:/.test(lines[lines.length - 1]);
+    b.classList.remove('run'); b.classList.add(bad ? 'bad' : 'done'); st.textContent = bad ? 'FEHLGESCHLAGEN' : 'ABGESCHLOSSEN ✓';
+    log(bad ? '  Vorgang abgebrochen' : '  Vorgang abgeschlossen', bad ? 'e' : 'ok');
+    A.busy = false;
+    setTimeout(() => { b.classList.remove('done', 'bad'); bar.style.width = '0'; st.textContent = ''; }, 4000);
+  }
+
+  /* ---------- Bedienung mit Lautstärketasten ---------- */
+  const flat = () => { const out = []; CATS.forEach((c, ci) => c.items.forEach((_, ii) => out.push([ci, ii]))); return out; };
+  window.onAdminKey = (k) => {
+    if (!A.open) return;
+    if (k === 'back') { closeAdmin(); return; }
+    if (k === 'ok') { run(A.sel); return; }
+    const f = flat(); let p = f.findIndex((x) => x[0] === A.cat && x[1] === A.sel);
+    p = (p + (k === 'down' ? 1 : f.length - 1)) % f.length;
+    const catChanged = f[p][0] !== A.cat; A.cat = f[p][0]; A.sel = f[p][1];
+    if (catChanged) render(); else paintSel();
+    try { sndTap(); } catch (e) {}
+  };
+
+  /* ---------- Live-Werte ---------- */
+  let gv = [23, 41, 38, 60];
+  function tick() {
+    const d = new Date(); $('aClock').textContent = [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
+    gv = gv.map((v, i) => Math.max(i === 2 ? 30 : 5, Math.min(i === 3 ? 180 : 95, v + (Math.random() - .5) * (i === 3 ? 30 : 9))));
+    [...gauges.children].forEach((g, i) => { g.querySelector('b').textContent = Math.round(gv[i]) + G[i][1]; g.querySelector('u').style.width = Math.min(100, gv[i] / (i === 3 ? 180 : 100) * 100) + '%'; });
+    el.querySelector('.aHex').textContent = '0x' + Math.floor(Math.random() * 0xFFFFFFFF).toString(16).toUpperCase().padStart(8, '0') + '  ·  SEKTOR ' + (A.cat + 1) + '.' + (A.sel + 1);
+    lastTouch = Date.now();
+  }
+  const NOISE = ['Heartbeat ok', 'Watchdog zurückgesetzt', 'Prüfsumme Block 0x{h} ok', 'Sensor T{n}: stabil', 'Uplink-Keepalive', 'Cache-Treffer {n}{n} %', 'Luigi-Kern: Leerlauf', 'Speicherseite 0x{h} gesichert'];
+  function noise() { const t = NOISE[Math.floor(Math.random() * NOISE.length)].replace(/\{h\}/g, () => Math.floor(Math.random() * 65535).toString(16).toUpperCase()).replace(/\{n\}/g, () => Math.floor(Math.random() * 10)); log(t, 'dim'); }
+
+  async function boot() {
+    const bt = el.querySelector('.aBoot'); el.classList.add('booting'); bt.innerHTML = '';
+    const L = ['BASTELRAUM SYSTEMKERN v' + APP_VERSION + '  –  NOTFALL-ADMINISTRATION', 'Initialisiere Sicherheitsmodul ........ OK', 'Prüfe Zugriffsstufe ................... 7', 'Lade Kernel-Matrix .................... OK', 'Verbinde Uplink ....................... OK', 'Entsperre Konsole …'];
+    for (const l of L) { if (!A.open) return; const r = document.createElement('div'); r.textContent = l; bt.appendChild(r); await new Promise((z) => setTimeout(z, 150)); }
+    await new Promise((z) => setTimeout(z, 250));
+    el.classList.remove('booting');
+  }
+  window.openAdmin = () => {
+    if (A.open) return;
+    A.open = true; A.cat = 0; A.sel = 0; A.busy = false;
+    try { if (L && L.open) luigiClose(); } catch (e) {}
+    if (typeof view === 'string' && view.startsWith('night')) show('home');
+    el.classList.remove('hidden', 'out'); render(); tick(); logEl.innerHTML = '';
+    log('Sitzung geöffnet · Stufe 7', 'ok');
+    A.t = [setInterval(tick, 1000), setInterval(noise, 2600)];
+    try { if (window.BastelOS && BastelOS.setAdminOpen) BastelOS.setAdminOpen(true); } catch (e) {}
+    boot();
+  };
+  function closeAdmin() {
+    if (!A.open) return;
+    A.open = false; A.t.forEach(clearInterval);
+    el.classList.add('out'); setTimeout(() => { if (!A.open) el.classList.add('hidden'); }, 300);
+    try { if (window.BastelOS && BastelOS.setAdminOpen) BastelOS.setAdminOpen(false); } catch (e) {}
+  }
+  window.closeAdmin = closeAdmin;
+
+  /* Ersatz-Zugang ohne neue App: 5× schnell auf „Hallo Mama“ tippen */
+  const hm = [...document.querySelectorAll('span')].find((s) => s.textContent === 'Hallo Mama');
+  if (hm) { let taps = []; hm.addEventListener('pointerdown', () => { const n = Date.now(); taps = taps.filter((t) => n - t < 1800); taps.push(n); if (taps.length >= 5) { taps = []; window.openAdmin(); } }); }
+})();
 </script>
 </body>
 </html>

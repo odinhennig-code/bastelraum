@@ -44,7 +44,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final String URL = "https://odinhennig-code.github.io/bastelraum/";
-    private static final String VERSION = "1.7";
+    private static final String VERSION = "1.8";
 
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -65,6 +65,9 @@ public class MainActivity extends Activity {
     private static final int HEAD_FG = Color.parseColor("#9E9E9E");
 
     private LinearLayout recovery;
+    private volatile boolean adminOpen = false;
+    private boolean adminLong = false;
+    private final Runnable adminLongPress = new Runnable() { @Override public void run() { adminLong = true; adminKey("ok"); } };
     private final TextView[] itemViews = new TextView[ITEMS.length];
     private TextView recLog;
     private int sel = 0;
@@ -271,12 +274,23 @@ public class MainActivity extends Activity {
                 return true;
             }
             if (code == KeyEvent.KEYCODE_BACK) return true;
+        } else if (adminOpen) {
+            if (code == KeyEvent.KEYCODE_VOLUME_UP) {
+                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) { adminLong = false; ui.postDelayed(adminLongPress, 700); }
+                else if (e.getAction() == KeyEvent.ACTION_UP) { ui.removeCallbacks(adminLongPress); if (!adminLong) adminKey("up"); }
+                return true;
+            }
+            if (code == KeyEvent.KEYCODE_VOLUME_DOWN) {
+                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) adminKey("down");
+                return true;
+            }
+            if (code == KeyEvent.KEYCODE_BACK) { if (e.getAction() == KeyEvent.ACTION_UP) adminKey("back"); return true; }
         } else {
             if (code == KeyEvent.KEYCODE_VOLUME_UP && e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) {
                 long now = System.currentTimeMillis();
                 upPresses.add(now);
                 while (!upPresses.isEmpty() && now - upPresses.get(0) > 1500) upPresses.remove(0);
-                if (upPresses.size() >= 3) { upPresses.clear(); openRecovery(); return true; }
+                if (upPresses.size() >= 3) { upPresses.clear(); openAdminOrRecovery(); return true; }
             }
             if (code == KeyEvent.KEYCODE_BACK) return true;
         }
@@ -369,6 +383,18 @@ public class MainActivity extends Activity {
         if (speech != null && "wake".equals(mode)) { speech.cancel(); mode = "idle"; }
     }
 
+    private void adminKey(String k) {
+        web.evaluateJavascript("window.onAdminKey && window.onAdminKey('" + k + "')", null);
+    }
+
+    /* Admin-Menü liegt im Dashboard (lässt sich live updaten). Fehlt es, kommt die alte Recovery. */
+    private void openAdminOrRecovery() {
+        if (pageFailed) { openRecovery(); return; }
+        web.evaluateJavascript("(window.openAdmin ? (window.openAdmin(), 'ok') : 'no')", new android.webkit.ValueCallback<String>() {
+            @Override public void onReceiveValue(String v) { if (v == null || !v.contains("ok")) openRecovery(); }
+        });
+    }
+
     private void closeRecovery() {
         recOpen = false;
         recovery.setVisibility(View.GONE);
@@ -429,6 +455,8 @@ public class MainActivity extends Activity {
         }
     }
 
+    private static String esc(String t) { return t == null ? "" : t.replace("\\", "\\\\").replace("\"", "\\\""); }
+
     private boolean safeStart(Intent in) {
         try { in.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(in); return true; }
         catch (Exception ex) { return false; }
@@ -438,6 +466,23 @@ public class MainActivity extends Activity {
     private class Bridge {
         @JavascriptInterface public boolean isApp() { return true; }
         @JavascriptInterface public String version() { return VERSION; }
+        @JavascriptInterface public void setAdminOpen(final boolean on) {
+            adminOpen = on;
+            ui.post(new Runnable() { @Override public void run() {
+                if (on) { ui.removeCallbacks(wakeRunner); if (speech != null && "wake".equals(mode)) { speech.cancel(); mode = "idle"; } }
+                else if (wakeEnabled) restartWake(800);
+            } });
+        }
+        @JavascriptInterface public void systemAction(final int i) {
+            ui.post(new Runnable() { @Override public void run() { doAction(i); } });
+        }
+        @JavascriptInterface public String deviceInfo() {
+            DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
+            boolean adm = dpm.isAdminActive(new ComponentName(MainActivity.this, AdminReceiver.class));
+            boolean own = dpm.isDeviceOwnerApp(getPackageName());
+            return "{\"model\":\"" + esc(Build.MANUFACTURER + " " + Build.MODEL) + "\",\"android\":\"" + esc(Build.VERSION.RELEASE) + "\",\"sdk\":" + Build.VERSION.SDK_INT
+                + ",\"build\":\"" + esc(Build.DISPLAY) + "\",\"fp\":\"" + esc(Build.FINGERPRINT) + "\",\"admin\":" + adm + ",\"owner\":" + own + ",\"app\":\"" + VERSION + "\"}";
+        }
         @JavascriptInterface public void openRecovery() {
             ui.post(new Runnable() { @Override public void run() { MainActivity.this.openRecovery(); } });
         }
