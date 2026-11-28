@@ -16,6 +16,7 @@ html,body{margin:0;height:100%;background:#07080C;overflow:hidden;-webkit-tap-hi
 body{font-family:Outfit,system-ui,sans-serif;color:#fff}
 button,input{font-family:inherit;color:#fff}
 button{cursor:pointer}
+#appLock{position:absolute;inset:0;z-index:940;background:#0E0F12;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;text-align:center}#appLock b{font-size:30px;font-weight:600;margin-top:8px}#appLock span{font-size:18px;color:rgba(255,255,255,.55)}#appLock.hidden{display:none}
 #adm{position:absolute;inset:0;z-index:950;background:#0E0F12;color:#E6E7EA;font-family:Outfit,system-ui,sans-serif;transition:opacity .25s;overflow:hidden}
 #adm.out{opacity:0}
 #adm .aBoot{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:3;background:#0E0F12;font-size:15px;color:rgba(255,255,255,.55)}
@@ -1038,6 +1039,7 @@ function luigiOff() {
   o.onclick = () => { clearTimeout(t); end(); };
 }
 function luigiListen() {
+  if (store.get('appLocked', false)) return;
   if (LUIGI_OFF) { luigiOff(); return; }
   luigiOpen();
   if (window.BastelOS && BastelOS.startSpeech) { BastelOS.startSpeech('__luigi'); return; }
@@ -1052,6 +1054,7 @@ function luigiListen() {
 window.onNativePartial = (id, t) => { if (id === '__luigi' && t) $('lHeard').textContent = '„' + t + '“'; };
 window.onNativeRms = (v) => { const lv = Math.max(0, Math.min(1, (v + 2) / 12)).toFixed(2); $('lGlow').style.setProperty('--lv', lv); document.querySelector('.ldots').style.setProperty('--lv', Math.max(0, Math.min(1, (v + 2) / 12)).toFixed(2)); };
 window.onWakeWord = (rest) => {
+  if (store.get('appLocked', false)) return;
   if (LUIGI_OFF) { luigiOff(); return; }
   luigiOpen();
   if (rest && rest.trim().length > 2) { luigiHeard(rest.trim(), null); return; }
@@ -1671,7 +1674,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.3.0';
+const APP_VERSION = '2.4.0';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -1873,6 +1876,25 @@ renderMsg(); renderRadio(); renderMats(); show('home');
       ['Neustart', 'Tablet neu starten', real(6), 'warn'],
       ['Wiederherstellungsmodus', 'Notfallmenü auf Systemebene', () => { closeAdmin(); if (window.BastelOS && BastelOS.openRecovery) BastelOS.openRecovery(); return ''; }, 'warn'],
     ] },
+    { k: 'DSP', n: 'Anzeige', c: '', items: [
+      ['Helligkeit: maximal', 'Hintergrundbeleuchtung 100 %', () => { try { BastelOS.setBrightness(1); } catch (e) {} return fakeRun(['Setze Beleuchtung', '100 %']); }],
+      ['Helligkeit: gedimmt', 'Hintergrundbeleuchtung 20 %', () => { try { BastelOS.setBrightness(0.2); } catch (e) {} return fakeRun(['Setze Beleuchtung', '20 %']); }],
+      ['Helligkeit: automatisch', 'Systemsteuerung übernehmen', () => { try { BastelOS.setBrightness(-1); } catch (e) {} return fakeRun(['Übergebe an System', 'Automatisch']); }],
+      ['Nachtmodus starten', 'Ruhige Uhr-Anzeige sofort', () => { closeAdmin(); setTimeout(() => show('night'), 300); return ''; }],
+      ['Bildschirmschoner starten', 'Animierten Schoner sofort zeigen', () => { closeAdmin(); setTimeout(() => show('night2'), 300); return ''; }],
+      ['Pixel-Auffrischung', 'Eingebrannte Bildreste reduzieren', fake(['Starte Farbzyklus', 'Durchlauf 1/2', 'Durchlauf 2/2', 'Abgeschlossen'])],
+      ['Farbprofil kalibrieren', 'Weißpunkt D65 abgleichen', fake(['Messe Weißpunkt', 'Korrigiere Gamma 2.2', 'Kalibriert'])],
+      ['Bildwiederholrate', 'Aktuell: 60 Hz', fake(['Prüfe Panel', '60 Hz stabil'])],
+    ] },
+    { k: 'AUD', n: 'Audio', c: '', items: [
+      ['Testton abspielen', 'Lautsprecher prüfen', () => { try { sndAlarm(); } catch (e) {} return fakeRun(['Sende Testsignal', 'Ausgabe ok']); }],
+      ['Hinweiston testen', 'Ton für neue Nachrichten', () => { try { sndMsg(); } catch (e) {} return fakeRun(['Spiele Hinweiston', 'Ausgabe ok']); }],
+      ['Sprachprobe', 'Luigis Stimme testen', () => { try { speak('Hallo, ich bin Luigi. So klinge ich gerade.'); } catch (e) {} return fakeRun(['Sende Text an Sprachausgabe', 'Wiedergabe gestartet']); }],
+      ['Radio stoppen', 'Laufenden Stream beenden', () => { try { stopRadio(); } catch (e) {} return fakeRun(['Trenne Stream', 'Radio aus']); }],
+      ['Audio-Pipeline neu starten', 'Puffer und Mixer zurücksetzen', fake(['Leere Puffer', 'Starte Mixer neu', 'Bereit'])],
+      ['Mikrofonpegel messen', 'Eingangsempfindlichkeit prüfen', fake(['Messe Grundrauschen', '-48 dB', 'Pegel in Ordnung'])],
+      ['Echo-Unterdrückung', 'Status: aktiv', fake(['Prüfe Filter', 'Aktiv'])],
+    ] },
     { k: 'KRN', n: 'Leistung & Speicher', c: '#4FD1FF', items: [
       ['Prozessplanung optimieren', 'Thread-Prioritäten neu berechnen', fake(['Lade Scheduler-Tabelle', 'Prüfe 4 Kerne', 'Richte Zeitscheiben aus', 'Abgeschlossen'])],
       ['Systemcache bereinigen', 'Zwischenspeicher freigeben', fake(['Scanne 0x0000–0xFFFF', 'Verwerfe 2.341 Blöcke', 'Cache bereinigt'])],
@@ -1882,6 +1904,7 @@ renderMsg(); renderRadio(); renderMats(); show('home');
       ['Interrupt-Tabelle prüfen', 'IRQ-Tabelle validieren', fake(['Lade IRQ 0–255', 'Prüfsummen ok', 'Keine Konflikte'])],
     ] },
     { k: 'NET', n: 'Netzwerk', c: '#7CFF8A', items: [
+      ['Handy-Verbindung neu aufbauen', 'Empfang vom Handy neu starten', () => { try { listenHandy(); pollHandy(); } catch (e) {} return fakeRun(['Schließe Kanal', 'Öffne Kanal', 'Verbunden']); }],
       ['Verbindung zum Handy prüfen', 'Laufzeit zum Nachrichtendienst messen', uplink],
       ['Paketfilter aktualisieren', 'Regeln für eingehende Verbindungen', fake(['Lade Regelwerk', '1.024 Regeln aktiv', 'Aktualisiert'])],
       ['Transportverschlüsselung prüfen', 'Zertifikate und Schlüssel validieren', fake(['Handshake', 'Schlüsseltausch 4096 bit', 'Gültig'])],
@@ -1890,7 +1913,7 @@ renderMsg(); renderRadio(); renderMats(); show('home');
       ['Funkmodule neu initialisieren', 'WLAN und Bluetooth zurücksetzen', fake(['Setze Module zurück', 'Initialisiere', 'Bereit'])],
     ] },
     { k: 'LGI', n: 'Assistent', c: '#C38BFF', items: [
-      ['KI-Anbindung', 'Groq · Schlüssel ' + (store.get('aiKey', '') ? 'eingerichtet' : 'fehlt'), () => { const k = prompt('Groq-API-Schlüssel eingeben (leer lassen zum Entfernen):', ''); if (k === null) return 'Abgebrochen'; setAiKey(k); render(); return k.trim() ? 'Schlüssel gespeichert' : 'Schlüssel entfernt'; }],
+      ['KI-Anbindung', () => 'Groq · Schlüssel ' + (store.get('aiKey', '') ? 'eingerichtet' : 'fehlt'), () => { const k = prompt('Groq-API-Schlüssel eingeben (leer lassen zum Entfernen):', ''); if (k === null) return 'Abgebrochen'; setAiKey(k); render(); return k.trim() ? 'Schlüssel gespeichert' : 'Schlüssel entfernt'; }],
       ['KI-Verbindung testen', 'Testfrage an das Sprachmodell senden', () => ({ lines: ['Sende Testfrage'], wait: askAI('Sag in einem kurzen Satz Hallo.').then((a) => ['Antwort: ' + a.slice(0, 60)]) })],
       ['Verhaltensmodell aktualisieren', 'Bewegungsabläufe neu berechnen', fake(['Lade 57 Verhaltensmuster', 'Epoche 1/3', 'Epoche 2/3', 'Epoche 3/3', 'Verlust 0,0012'])],
       ['Assistent-Profil sichern', 'Einstellungen von Luigi sichern', fake(['Lese Einstellungen', 'Schreibe Sicherung', 'Gesichert'])],
@@ -1899,6 +1922,13 @@ renderMsg(); renderRadio(); renderMats(); show('home');
       ['Assistent zurückholen', 'Luigi an den Rand setzen', () => { try { if (typeof buddyHome === 'function') buddyHome(true); } catch (e) {} return fakeRun(['Sende Rückruf', 'Luigi ist am Rand']); }],
       ['Sprachmodul abgleichen', 'Stimme & Weckwort prüfen', fake(['Prüfe Weckwort „Hey Luigi“', 'Prüfe Sprachausgabe', 'Module bereit'])],
       ['Ruhezustand des Assistenten', 'Aktivität vorübergehend senken', fake(['Senke Aktivität', 'Ruhezustand aktiv'])],
+    ] },
+    { k: 'DAT', n: 'Daten', c: '', items: [
+      ['Speicherbelegung analysieren', 'Lokale Daten des Dashboards', () => { let n = 0, b = 0; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); n++; b += (k.length + (localStorage.getItem(k) || '').length) * 2; } } catch (e) {} return { lines: [n + ' Einträge', (b / 1024).toFixed(1) + ' KB belegt', 'Analyse fertig'], instant: true }; }],
+      ['Datensicherung erstellen', 'Projekte, Material, Einstellungen', fake(['Sammle Datensätze', 'Komprimiere', 'Sicherung #12 erstellt'])],
+      ['Datenbank-Index neu aufbauen', 'Suche und Sortierung beschleunigen', fake(['Lese Tabellen', 'Baue Index', 'Fertig'])],
+      ['Konsistenzprüfung', 'Datensätze auf Fehler prüfen', fake(['Prüfe Projekte', 'Prüfe Material', 'Keine Fehler'])],
+      ['Temporäre Dateien entfernen', 'Zwischenstände löschen', fake(['Suche Dateien', '17 Dateien entfernt'])],
     ] },
     { k: 'SEC', n: 'Sicherheit', c: '#FF4D5E', items: [
       ['Integritätsprüfung', 'Systemdateien auf Veränderungen prüfen', fake(['Scanne Prozesse', 'Scanne Speicher', 'Scanne Ports', 'Keine Auffälligkeiten'])],
@@ -1913,7 +1943,18 @@ renderMsg(); renderRadio(); renderMats(); show('home');
       ['Telemetrie exportieren', 'Messwerte sichern', fake(['Lese Puffer', 'Schreibe 512 Messpunkte', 'Gesichert'])],
       ['Protokolle archivieren', 'Logbuch komprimieren', fake(['Packe 3 Logdateien', 'Archiv 41 KB', 'Archiviert'])],
     ] },
+    { k: 'ACC', n: 'Zugriff & Sperre', c: '', items: [
+      ['App sperren', () => store.get('appLocked', false) ? 'Status: gesperrt' : 'Bedienung für Benutzer sperren', () => { lockApp(true); return fakeRun(['Setze Sperre', 'App gesperrt']); }, 'warn'],
+      ['App entsperren', 'Sperre aufheben', () => { lockApp(false); return fakeRun(['Hebe Sperre auf', 'App freigegeben']); }],
+      ['Touch-Bedienung', () => 'Systemverwaltung per Antippen: ' + (store.get('admTouch', false) ? 'an' : 'aus'), () => { store.set('admTouch', !store.get('admTouch', false)); setTimeout(render, 50); return fakeRun(['Touch-Bedienung ' + (store.get('admTouch', false) ? 'an' : 'aus')]); }],
+      ['Administratorrechte prüfen', 'Aktuelle Sitzung', fake(['Prüfe Sitzung', 'Administrator', 'Alle Rechte'])],
+      ['Sitzungsschlüssel erneuern', 'Neuen Zugangsschlüssel erzeugen', fake(['Erzeuge Schlüssel', 'Alter Schlüssel ungültig', 'Erneuert'])],
+      ['Fernwartung', 'Status: deaktiviert', fake(['Prüfe Dienst', 'Fernwartung bleibt aus'])],
+    ] },
   ];
+  function touchOK() { return store.get('admTouch', false) || !(window.BastelOS && BastelOS.setAdminOpen); }
+  let hintAt = 0;
+  function touchHint() { if (Date.now() - hintAt > 2500) { hintAt = Date.now(); log('Touch-Bedienung deaktiviert – Lauter/Leiser verwenden', 'w'); } }
   function fake(lines, fail) { return () => fakeRun(lines, fail); }
   function fakeRun(lines, fail) { return { lines, fail }; }
   function uplink() {
@@ -1936,13 +1977,13 @@ renderMsg(); renderRadio(); renderMats(); show('home');
   const el = document.createElement('div'); el.id = 'adm'; el.className = 'hidden';
   el.innerHTML = '<div class="aBoot"></div><div class="aUi"><div class="aTop"><div class="aBrand"><span class="aGlyph">◢◤</span><div><b>Systemverwaltung</b><i>Bastelraum OS · Wartung und Diagnose · nur für Administratoren</i></div></div><div class="aStat"><span id="aClock">--:--:--</span><span>Admin-Sitzung</span></div></div>'
     + '<div class="aBody"><nav class="aNav"></nav><main class="aMain"><div class="aHead"></div><div class="aGrid"></div></main><aside class="aSide"><div class="aGauges"></div><div class="aLogT">Ereignisse</div><div class="aLog"></div></aside></div>'
-    + '<div class="aFoot"><span>Lauter / Leiser: auswählen</span><span>Lauter halten: ausführen</span><span>Zurück: schließen</span><span class="aHex"></span></div></div>';
+    + '<div class="aFoot"><span>Lauter / Leiser: auswählen</span><span>Lauter halten: ausführen</span><span>Zurück: schließen</span><span class="aTouch"></span><span class="aHex"></span></div></div>';
   $('stage').appendChild(el);
   const nav = el.querySelector('.aNav'), grid = el.querySelector('.aGrid'), head = el.querySelector('.aHead'), logEl = el.querySelector('.aLog'), gauges = el.querySelector('.aGauges');
   CATS.forEach((c, i) => {
     const b = document.createElement('button'); b.className = 'aCat'; 
     b.innerHTML = '<span class="k">' + c.k + '</span><span class="n">' + c.n + '</span><span class="cnt">' + String(c.items.length).padStart(2, '0') + '</span>';
-    b.onclick = () => { A.cat = i; A.sel = 0; render(); tick(); };
+    b.onclick = () => { if (!touchOK()) return touchHint(); A.cat = i; A.sel = 0; render(); tick(); };
     nav.appendChild(b);
   });
   const G = [['Prozessor', '%'], ['Speicher', '%'], ['Temperatur', '°C'], ['Latenz', 'ms']];
@@ -1963,8 +2004,8 @@ renderMsg(); renderRadio(); renderMats(); show('home');
     grid.innerHTML = '';
     c.items.forEach((it, i) => {
       const b = document.createElement('button'); b.className = 'aIt' + (it[3] ? ' ' + it[3] : '') + (i === A.sel ? ' sel' : '');
-      b.innerHTML = '<span class="id">' + c.k + '-' + String(i + 1).padStart(2, '0') + '</span><b>' + it[0] + '</b><span class="d">' + it[1] + '</span><span class="bar"><u></u></span><span class="st"></span>';
-      b.onclick = () => { if (A.sel === i) run(i); else { A.sel = i; paintSel(); tick(); } };
+      b.innerHTML = '<span class="id">' + c.k + '-' + String(i + 1).padStart(2, '0') + '</span><b>' + it[0] + '</b><span class="d">' + (typeof it[1] === 'function' ? it[1]() : it[1]) + '</span><span class="bar"><u></u></span><span class="st"></span>';
+      b.onclick = () => { if (!touchOK()) return touchHint(); if (A.sel === i) run(i); else { A.sel = i; paintSel(); tick(); } };
       grid.appendChild(b);
     });
   }
@@ -1998,6 +2039,7 @@ renderMsg(); renderRadio(); renderMats(); show('home');
 
   /* ---------- Bedienung mit Lautstärketasten ---------- */
   const flat = () => { const out = []; CATS.forEach((c, ci) => c.items.forEach((_, ii) => out.push([ci, ii]))); return out; };
+  document.addEventListener('keydown', (e) => { if (!A.open) return; const m = { ArrowUp: 'up', ArrowDown: 'down', Enter: 'ok', Escape: 'back' }[e.key]; if (m) { e.preventDefault(); window.onAdminKey(m); } });
   window.onAdminKey = (k) => {
     if (!A.open) return;
     if (k === 'back') { closeAdmin(); return; }
@@ -2015,6 +2057,7 @@ renderMsg(); renderRadio(); renderMats(); show('home');
     const d = new Date(); $('aClock').textContent = [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
     gv = gv.map((v, i) => Math.max(i === 2 ? 30 : 5, Math.min(i === 3 ? 180 : 95, v + (Math.random() - .5) * (i === 3 ? 30 : 9))));
     [...gauges.children].forEach((g, i) => { g.querySelector('b').textContent = Math.round(gv[i]) + G[i][1]; g.querySelector('u').style.width = Math.min(100, gv[i] / (i === 3 ? 180 : 100) * 100) + '%'; });
+    el.querySelector('.aTouch').textContent = 'Touch: ' + (touchOK() ? 'an' : 'aus');
     el.querySelector('.aHex').textContent = 'Build ' + APP_VERSION + (INFO ? ' · App ' + INFO.app : '');
     lastTouch = Date.now();
   }
@@ -2050,6 +2093,17 @@ renderMsg(); renderRadio(); renderMats(); show('home');
   const hm = [...document.querySelectorAll('span')].find((s) => s.textContent === 'Hallo Mama');
   if (hm) { let taps = []; hm.addEventListener('pointerdown', () => { const n = Date.now(); taps = taps.filter((t) => n - t < 1800); taps.push(n); if (taps.length >= 5) { taps = []; window.openAdmin(); } }); }
 })();
+
+/* ---------- App-Sperre ---------- */
+const lockEl = document.createElement('div'); lockEl.id = 'appLock'; lockEl.className = 'hidden';
+lockEl.innerHTML = '<svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><b>App vorübergehend gesperrt</b><span>Bitte fragen Sie einen Systemadministrator.</span>';
+$('stage').appendChild(lockEl);
+function lockApp(on) {
+  store.set('appLocked', !!on); lockEl.classList.toggle('hidden', !on);
+  try { if (on && L.open) luigiClose(); } catch (e) {}
+}
+if (store.get('appLocked', false)) lockApp(true);
+{ let t = []; lockEl.addEventListener('pointerdown', (e) => { if (e.clientY > 120 || e.clientX < window.innerWidth - 160) { t = []; return; } const n = Date.now(); t = t.filter((x) => n - x < 2500); t.push(n); if (t.length >= 7) { t = []; window.openAdmin && openAdmin(); } }); }
 </script>
 </body>
 </html>
