@@ -618,19 +618,38 @@ async function sendToOdin(text, o) {
   } catch (e) { say('Nachricht konnte nicht gesendet werden – kein Internet?'); return false; }
 }
 let inbox = null;
+/* Zwei Wege gleichzeitig: Live-Verbindung UND alle 8 s nachfragen.
+   Manche Tablets halten die Live-Verbindung offen, liefern aber nichts aus. */
+const seenMsg = new Set();
+let lastMsgId = store.get('lastMsgId', null), lastHeard = 0;
+function handleIncoming(m) {
+  if (!m || m.event !== 'message' || !m.message || seenMsg.has(m.id)) return;
+  seenMsg.add(m.id); lastMsgId = m.id; store.set('lastMsgId', m.id); lastHeard = Date.now();
+  if (m.title === 'Test') { sendToOdin('Das Tablet hat deinen Test bekommen ✓', { title: 'Bastelraum', priority: 3, tags: 'white_check_mark' }); say('Test vom Handy angekommen ✓'); return; }
+  receiveMessage(m.message);
+}
 function listenHandy() {
   try {
     if (inbox) inbox.close();
     inbox = new EventSource(NTFY + topicTablet() + '/sse');
-    inbox.onmessage = (e) => { try {
-      const m = JSON.parse(e.data); if (m.event !== 'message' || !m.message) return;
-      if (m.title === 'Test') { sendToOdin('Das Tablet hat deinen Test bekommen ✓', { title: 'Bastelraum', priority: 3, tags: 'white_check_mark' }); say('Test vom Handy angekommen ✓'); return; }
-      receiveMessage(m.message);
-    } catch (x) {} };
+    inbox.onmessage = (e) => { try { handleIncoming(JSON.parse(e.data)); } catch (x) {} };
+    inbox.onerror = () => { if (inbox.readyState === 2) setTimeout(listenHandy, 5000); };
   } catch (e) {}
 }
-listenHandy();
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && (!inbox || inbox.readyState === 2)) listenHandy(); });
+let polling = false, pollStart = Math.floor(Date.now() / 1000) - 30;
+async function pollHandy() {
+  if (polling) return; polling = true;
+  try {
+    const since = lastMsgId || pollStart;
+    const r = await fetch(NTFY + topicTablet() + '/json?poll=1&since=' + since, { cache: 'no-store' });
+    if (r.ok) { lastHeard = Date.now(); (await r.text()).split('\n').forEach((l) => { if (l.trim()) try { handleIncoming(JSON.parse(l)); } catch (x) {} }); }
+  } catch (e) {}
+  polling = false;
+}
+listenHandy(); pollHandy();
+setInterval(pollHandy, 8000);
+setInterval(() => { if (inbox && inbox.readyState !== 1) listenHandy(); }, 60000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { pollHandy(); if (!inbox || inbox.readyState === 2) listenHandy(); } });
 QUICK.forEach((t) => {
   const b = document.createElement('button');
   b.className = 'gb'; b.style.cssText = 'height:52px;border-radius:16px;font-size:14px;font-weight:500';
@@ -1518,7 +1537,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.1.1';
+const APP_VERSION = '2.1.2';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -1612,7 +1631,7 @@ async function openPairing() {
     + '<span>Mit der iPhone-Kamera den Code scannen und den Link öffnen.</span>'
     + '<span class="muted" style="font-size:15px">Oder auf dem Handy <b>odinhennig-code.github.io/bastelraum/handy.html</b> öffnen und diesen Code eintippen:</span>'
     + '<span class="num" style="font-size:30px;font-weight:600;letter-spacing:4px;color:#FFC56B">' + esc(pairKey()) + '</span>'
-    + '<span class="muted" style="font-size:14px">Empfang: ' + (inbox && inbox.readyState === 1 ? 'verbunden ✓' : 'getrennt') + ' · Dashboard ' + APP_VERSION + '</span></div></div>'
+    + '<span class="muted" style="font-size:14px">Empfang: ' + (Date.now() - lastHeard < 30000 || (inbox && inbox.readyState === 1) ? 'verbunden ✓' : 'getrennt') + ' · Dashboard ' + APP_VERSION + '</span></div></div>'
     + '<div style="display:flex;gap:10px"><button id="pairTest" class="gb pill" style="flex:1;height:52px;font-size:16px">Test ans Handy</button><button id="sCancel" class="accent pill" style="flex:1;height:52px;font-size:16px">Fertig</button></div>';
   $('sCancel').onclick = closeSheet;
   $('pairTest').onclick = async () => { if (await sendToOdin('Test vom Tablet – die Verbindung klappt!', { title: 'Bastelraum', priority: 3, tags: 'tada' })) say('Test ans Handy gesendet'); };
