@@ -971,7 +971,7 @@ function luigiOpen() {
   const o = $('lPanel'); o.classList.remove('think'); o.classList.add('listen');
   setTimeout(() => { if (L.open) o.classList.add('open'); }, wasAway ? 330 : 0);
 }
-const LUIGI_OFF = true;   // Luigi vorübergehend aus (Bugs)
+const LUIGI_OFF = false;   // Luigi vorübergehend aus (Bugs)
 function luigiOff() {
   if ($('lOff')) return;
   if (view.startsWith('night')) show('home');
@@ -1573,7 +1573,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.1.4';
+const APP_VERSION = '2.1.5';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
