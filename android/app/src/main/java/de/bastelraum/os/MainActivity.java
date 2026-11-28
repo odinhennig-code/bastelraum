@@ -44,7 +44,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final String URL = "https://odinhennig-code.github.io/bastelraum/";
-    private static final String VERSION = "1.8";
+    private static final String VERSION = "1.9";
 
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -155,6 +155,8 @@ public class MainActivity extends Activity {
 
     /* Schönere Stimme: SherpaTTS (Piper-Stimmen, kostenlos, offline) wird bevorzugt, wenn installiert */
     private static final String[] NICE_ENGINES = {"org.woheller69.ttsengine", "com.k2fsa.sherpa.onnx.tts.engine"};
+    private String ttsEngine = "";
+    private boolean ttsRetried = false;
     private void initTts() {
         String engine = null;
         for (String pkg : NICE_ENGINES) {
@@ -162,6 +164,7 @@ public class MainActivity extends Activity {
         }
         TextToSpeech.OnInitListener l = new TextToSpeech.OnInitListener() {
             @Override public void onInit(int st) {
+                if (st != TextToSpeech.SUCCESS && !ttsRetried) { ttsRetried = true; ui.postDelayed(new Runnable() { @Override public void run() { initTts(); } }, 4000); return; }
                 if (st == TextToSpeech.SUCCESS) {
                     tts.setLanguage(Locale.GERMANY);
                     pickMaleVoice();
@@ -172,6 +175,7 @@ public class MainActivity extends Activity {
         };
         if (tts != null) { try { tts.shutdown(); } catch (Exception ignored) {} }
         ttsReady = false;
+        ttsEngine = engine != null ? engine : "(Standard)";
         tts = engine != null ? new TextToSpeech(this, l, engine) : new TextToSpeech(this, l);
     }
 
@@ -475,6 +479,16 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public void systemAction(final int i) {
             ui.post(new Runnable() { @Override public void run() { doAction(i); } });
+        }
+        @JavascriptInterface public String ttsInfo() {
+            StringBuilder sb = new StringBuilder();
+            try { for (TextToSpeech.EngineInfo e : tts.getEngines()) { if (sb.length() > 0) sb.append(", "); sb.append(e.name); } } catch (Exception ignored) {}
+            String voice = ""; try { voice = tts.getVoice() != null ? tts.getVoice().getName() : ""; } catch (Exception ignored) {}
+            String def = ""; try { def = tts.getDefaultEngine(); } catch (Exception ignored) {}
+            return "Modul: " + ttsEngine + (ttsReady ? " (bereit)" : " (nicht bereit)") + " | Stimme: " + voice + " | Standard: " + def + " | Installiert: " + sb;
+        }
+        @JavascriptInterface public void reloadTts() {
+            ui.post(new Runnable() { @Override public void run() { ttsRetried = false; initTts(); } });
         }
         @JavascriptInterface public String deviceInfo() {
             DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);

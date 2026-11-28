@@ -143,6 +143,8 @@ ol{margin:6px 0 0;padding-left:20px;line-height:1.55;font-size:15px}
   <div class="glass card fade stack" style="animation-delay:.05s">
     <span style="font-size:19px;font-weight:600">Verbindung</span>
     <span class="muted" style="font-size:15px">Verbunden mit Code <code id="codeTxt"></code></span>
+    <span class="muted" style="font-size:14px;margin-top:6px">KI für Luigi (Groq-Schlüssel)</span>
+    <div class="row"><input id="aiKeyIn" class="field" placeholder="gsk_…" autocomplete="off" autocapitalize="off" spellcheck="false"><button id="aiKeyBtn" class="gb" style="height:52px;border-radius:999px;padding:0 18px;font-size:15px">Senden</button></div>
     <button id="testBtn" class="gb" style="height:50px;border-radius:999px;font-size:15px">Test-Nachricht ans Tablet</button>
     <button id="unpair" class="gb" style="height:50px;border-radius:999px;font-size:15px;color:#FF9A80">Verbindung trennen</button>
   </div>
@@ -307,6 +309,10 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 $('setBtn').onclick = () => { $('topicTxt').textContent = topicOdin(); $('codeTxt').textContent = key; show('vSet'); };
 $('setBack').onclick = () => show('vMain');
 $('copyTopic').onclick = async () => { try { await navigator.clipboard.writeText(topicOdin()); toast('Kopiert'); } catch (e) { toast('Bitte von Hand abschreiben'); } };
+$('aiKeyBtn').onclick = async () => {
+  const k = $('aiKeyIn').value.trim(); if (!k) { toast('Bitte Schlüssel einfügen'); return; }
+  try { const r = await fetch(NTFY + topicTablet(), { method: 'POST', body: k, headers: { Title: 'KI-Schluessel' } }); if (!r.ok) throw 0; $('aiKeyIn').value = ''; toast('Schlüssel ans Tablet geschickt'); } catch (e) { toast('Senden hat nicht geklappt'); }
+};
 $('testBtn').onclick = () => { send('Test vom Handy', 'Test'); toast('Test gesendet – das Tablet antwortet gleich im Verlauf'); };
 $('unpair').onclick = () => { if (es) es.close(); key = null; store.set('key', null); log = []; store.set('log', []); show('vPair'); };
 

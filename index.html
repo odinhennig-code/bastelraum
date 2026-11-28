@@ -697,6 +697,7 @@ let lastMsgId = store.get('lastMsgId', null), lastHeard = 0;
 function handleIncoming(m) {
   if (!m || m.event !== 'message' || !m.message || seenMsg.has(m.id)) return;
   seenMsg.add(m.id); lastMsgId = m.id; store.set('lastMsgId', m.id); lastHeard = Date.now();
+  if (m.title === 'KI-Schluessel') { setAiKey(m.message === '-' ? '' : m.message); sendToOdin(m.message === '-' ? 'KI-Schlüssel am Tablet entfernt' : 'KI-Schlüssel ist am Tablet angekommen ✓', { title: 'Bastelraum', priority: 3, tags: 'white_check_mark' }); return; }
   if (m.title === 'Test') { sendToOdin('Das Tablet hat deinen Test bekommen ✓', { title: 'Bastelraum', priority: 3, tags: 'white_check_mark' }); say('Test vom Handy angekommen ✓'); return; }
   receiveMessage(m.message);
 }
@@ -1062,14 +1063,59 @@ function luigiHeard(text, error) {
   if (error) { luigiReply('Das hab ich nicht verstanden. Tipp mich an und sag es nochmal.'); return; }
   $('lHeard').textContent = '„' + text.charAt(0).toUpperCase() + text.slice(1) + '“';
   o.classList.add('think');
-  setTimeout(() => luigiReply(luigiDo(text)), 450);
+  setTimeout(async () => {
+    let r = null; try { r = luigiDo(text); } catch (e) {}
+    if (r != null) { luigiReply(r); return; }
+    if (!store.get('aiKey', '')) { luigiReply('Das hab ich nicht verstanden. Sag zum Beispiel: Stell einen Timer auf 10 Minuten.'); return; }
+    $('lHeard').textContent = '„' + text.charAt(0).toUpperCase() + text.slice(1) + '“';
+    const a = await askAI(text);
+    if (L.open) luigiReply(a);
+  }, 450);
+}
+
+/* ---------- Echte KI (Groq, kostenlos) ---------- */
+const AI_MODELS = ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'llama-3.1-8b-instant'];
+let aiHist = [], aiHistAt = 0;
+async function askAI(q) {
+  if (Date.now() - aiHistAt > 3 * 60 * 1000) aiHist = [];
+  aiHistAt = Date.now();
+  const d = new Date();
+  const sys = 'Du bist Luigi, ein freundlicher kleiner Sprachassistent auf einem Tablet im Bastelraum. Du sprichst mit Mama, die dort bastelt und einen Etsy-Shop mit Handgemachtem betreibt (Harz, Kleben, Malen, Nähen usw.). '
+    + 'Antworte immer auf Deutsch, kurz und natürlich: höchstens zwei bis drei Sätze, keine Listen, kein Markdown, keine Emojis, weil die Antwort vorgelesen wird. Sag es ehrlich, wenn du etwas nicht weißt. '
+    + 'Jetzt ist ' + d.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ', ' + hhmm(d) + ' Uhr.';
+  const msgs = [{ role: 'system', content: sys }].concat(aiHist, [{ role: 'user', content: q }]);
+  let models = AI_MODELS.slice(); const good = store.get('aiModel', null); if (good) models = [good].concat(models.filter((m) => m !== good));
+  for (const model of models) {
+    try {
+      const body = { model, messages: msgs, max_tokens: 400, temperature: .6 };
+      if (model.indexOf('gpt-oss') >= 0) body.reasoning_effort = 'low';
+      const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 15000);
+      const r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + store.get('aiKey', '') }, body: JSON.stringify(body) });
+      clearTimeout(to);
+      if (r.status === 401) return 'Mein KI-Schlüssel stimmt nicht. Sag Odin Bescheid.';
+      if (r.status === 429) return 'Ich hab heute schon so viel nachgedacht. Frag mich bitte gleich nochmal.';
+      if (!r.ok) continue;
+      const j = await r.json();
+      let a = ((j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '').replace(/[*#_`]/g, '').trim();
+      if (!a) continue;
+      store.set('aiModel', model);
+      aiHist.push({ role: 'user', content: q }, { role: 'assistant', content: a }); aiHist = aiHist.slice(-8);
+      return a;
+    } catch (e) {}
+  }
+  return 'Ich komme gerade nicht ins Internet. Versuch es gleich nochmal.';
+}
+function setAiKey(k) {
+  k = String(k || '').trim();
+  store.set('aiKey', k); store.set('aiModel', null);
+  say(k ? 'KI für Luigi eingerichtet ✓' : 'KI-Schlüssel entfernt');
 }
 function luigiReply(t) {
   const o = $('lPanel'); o.classList.remove('think', 'listen');
   const b = $('lSay'); b.textContent = t; b.classList.remove('hidden');
   b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
   if (store.get('luigiVoice', true)) speak(t);
-  clearTimeout(L.closeT); L.closeT = setTimeout(luigiClose, 5200);
+  clearTimeout(L.closeT); L.closeT = setTimeout(luigiClose, Math.max(5200, String(t).length * 75));
 }
 function luigiClose() {
   L.open = false; if (L.rec) try { L.rec.stop(); } catch (e) {}
@@ -1605,7 +1651,7 @@ function luigiDo(raw) {
   if (has('hallo', 'hi ', 'guten morgen', 'guten tag', 'servus', 'moin')) return 'Hallo Mama! Was kann ich für dich tun?';
   if (has('wer bist du', 'wie heißt du')) return 'Ich bin Luigi, dein kleiner Helfer im Bastelraum.';
   if (has('was kannst du', 'hilfe')) return 'Ich kann Timer stellen, Radio anmachen, Odin rufen, Material eintragen und dir Uhrzeit und Wetter sagen.';
-  return 'Das hab ich nicht verstanden. Sag zum Beispiel: Stell einen Timer auf 10 Minuten.';
+  return null;
 }
 window.onMotion = () => { if (view.startsWith('night')) { lastTouch = Date.now(); show('home'); } };
 if (window.BastelOS && BastelOS.setWakeWord) { try { BastelOS.setWakeWord(true); } catch (e) {} }
@@ -1625,7 +1671,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.2.1';
+const APP_VERSION = '2.3.0';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -1844,8 +1890,12 @@ renderMsg(); renderRadio(); renderMats(); show('home');
       ['Funkmodule neu initialisieren', 'WLAN und Bluetooth zurücksetzen', fake(['Setze Module zurück', 'Initialisiere', 'Bereit'])],
     ] },
     { k: 'LGI', n: 'Assistent', c: '#C38BFF', items: [
+      ['KI-Anbindung', 'Groq · Schlüssel ' + (store.get('aiKey', '') ? 'eingerichtet' : 'fehlt'), () => { const k = prompt('Groq-API-Schlüssel eingeben (leer lassen zum Entfernen):', ''); if (k === null) return 'Abgebrochen'; setAiKey(k); render(); return k.trim() ? 'Schlüssel gespeichert' : 'Schlüssel entfernt'; }],
+      ['KI-Verbindung testen', 'Testfrage an das Sprachmodell senden', () => ({ lines: ['Sende Testfrage'], wait: askAI('Sag in einem kurzen Satz Hallo.').then((a) => ['Antwort: ' + a.slice(0, 60)]) })],
       ['Verhaltensmodell aktualisieren', 'Bewegungsabläufe neu berechnen', fake(['Lade 57 Verhaltensmuster', 'Epoche 1/3', 'Epoche 2/3', 'Epoche 3/3', 'Verlust 0,0012'])],
       ['Assistent-Profil sichern', 'Einstellungen von Luigi sichern', fake(['Lese Einstellungen', 'Schreibe Sicherung', 'Gesichert'])],
+      ['Sprachausgabe prüfen', 'Aktives Stimmenmodul anzeigen', () => { let t = 'Nur in der neuen Tablet-App'; try { if (window.BastelOS && BastelOS.ttsInfo) t = BastelOS.ttsInfo(); } catch (e) {} return { lines: t.split(' | '), instant: true }; }],
+      ['Sprachausgabe neu laden', 'Stimmenmodul neu starten und testen', () => { try { BastelOS.reloadTts(); setTimeout(() => speak('Hallo, ich bin Luigi.'), 2500); } catch (e) { return 'Nur in der neuen Tablet-App'; } return fakeRun(['Starte Modul neu', 'Sprechprobe']); }],
       ['Assistent zurückholen', 'Luigi an den Rand setzen', () => { try { if (typeof buddyHome === 'function') buddyHome(true); } catch (e) {} return fakeRun(['Sende Rückruf', 'Luigi ist am Rand']); }],
       ['Sprachmodul abgleichen', 'Stimme & Weckwort prüfen', fake(['Prüfe Weckwort „Hey Luigi“', 'Prüfe Sprachausgabe', 'Module bereit'])],
       ['Ruhezustand des Assistenten', 'Aktivität vorübergehend senken', fake(['Senke Aktivität', 'Ruhezustand aktiv'])],
