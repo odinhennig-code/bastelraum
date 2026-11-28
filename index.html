@@ -1067,6 +1067,10 @@ function luigiListen() {
   if (store.get('appLocked', false)) return;
   if (luigiIsOff()) { luigiOff(); return; }
   luigiOpen();
+  if (store.get('aiKey', '') && navigator.mediaDevices && window.MediaRecorder) {
+    whisperListen().then((ok) => { if (!ok && L.open) { if (window.BastelOS && BastelOS.startSpeech) BastelOS.startSpeech('__luigi'); else luigiReply('Ich komme gerade nicht ans Mikrofon.'); } });
+    return;
+  }
   if (window.BastelOS && BastelOS.startSpeech) { BastelOS.startSpeech('__luigi'); return; }
   if (!SR) { luigiReply('Ich kann hier leider nicht zuhören. Nimm Chrome oder die Tablet-App.'); return; }
   const rec = new SR(); rec.lang = 'de-DE'; rec.interimResults = true; L.rec = rec;
@@ -1075,6 +1079,61 @@ function luigiListen() {
   rec.onerror = () => {};
   rec.onend = () => { L.rec = null; luigiHeard(last, last ? null : 'nichts'); };
   rec.start();
+}
+/* Zuhören mit Whisper (Groq): viel genauer als die Android-Erkennung, ohne Pieptöne */
+async function whisperListen() {
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); } catch (e) { return false; }
+  if (!L.open) { stream.getTracks().forEach((t) => t.stop()); return true; }
+  const AC = window.AudioContext || window.webkitAudioContext; const ac = new AC();
+  const an = ac.createAnalyser(); an.fftSize = 1024; ac.createMediaStreamSource(stream).connect(an);
+  const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'].find((m) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || '';
+  let mr; try { mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined); } catch (e) { stream.getTracks().forEach((t) => t.stop()); ac.close(); return false; }
+  const chunks = []; mr.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+  const buf = new Float32Array(an.fftSize), t0 = Date.now(), cal = [];
+  let floor = 0.01, spoke = 0, quietSince = 0, done = false, cancelled = false, iv = 0;
+  const finish = () => { if (done) return; done = true; clearInterval(iv); try { mr.stop(); } catch (e) {} };
+  L.rec = { stop: () => { cancelled = true; finish(); } };
+  mr.onstop = async () => {
+    stream.getTracks().forEach((t) => t.stop()); try { ac.close(); } catch (e) {}
+    L.rec = null; $('lGlow').style.setProperty('--lv', 0);
+    if (cancelled || !L.open) return;
+    if (spoke < 3) { luigiHeard('', 'nichts gehört'); return; }
+    const o = $('lPanel'); o.classList.remove('listen'); o.classList.add('think'); $('lHeard').textContent = 'Einen Moment …';
+    const text = await transcribe(new Blob(chunks, { type: (mr.mimeType || mime || 'audio/webm') }));
+    if (!L.open) return;
+    if (text === null) { luigiReply('Ich komme gerade nicht ins Internet.'); return; }
+    luigiHeard(text, text ? null : 'nicht verstanden');
+  };
+  iv = setInterval(() => {
+    an.getFloatTimeDomainData ? an.getFloatTimeDomainData(buf) : null;
+    let sum = 0; for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+    const rms = Math.sqrt(sum / buf.length), el = Date.now() - t0;
+    if (el < 400) { cal.push(rms); floor = Math.max(0.006, cal.reduce((a, b) => a + b, 0) / cal.length); return; }
+    const lv = Math.max(0, Math.min(1, (rms - floor) / (floor * 6)));
+    $('lGlow').style.setProperty('--lv', lv.toFixed(2)); const d = document.querySelector('.ldots'); if (d) d.style.setProperty('--lv', lv.toFixed(2));
+    if (rms > floor * 2.6 + 0.004) { spoke++; quietSince = 0; }
+    else if (spoke >= 3) { if (!quietSince) quietSince = Date.now(); if (Date.now() - quietSince > 1100) finish(); }
+    if (spoke < 3 && el > 6500) finish();
+    if (el > 15000) finish();
+  }, 50);
+  mr.start(250);
+  return true;
+}
+async function transcribe(blob) {
+  const ext = /mp4/.test(blob.type) ? 'm4a' : /ogg/.test(blob.type) ? 'ogg' : 'webm';
+  for (const model of ['whisper-large-v3-turbo', 'whisper-large-v3']) {
+    try {
+      const fd = new FormData(); fd.append('file', blob, 'luigi.' + ext); fd.append('model', model); fd.append('language', 'de'); fd.append('temperature', '0'); fd.append('response_format', 'json');
+      fd.append('prompt', 'Luigi, Timer, Minuten, Radio, Odin, Harz, Basteln, Material.');
+      const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: 'Bearer ' + store.get('aiKey', '') }, body: fd });
+      if (!r.ok) continue;
+      let t = ((await r.json()).text || '').trim();
+      if (/untertitel|amara\.org|zdf|vielen dank für(s| das) zuschauen|copyright/i.test(t) && t.length < 80) t = '';
+      return t.replace(/^[„"'\s]+|[“"'\s]+$/g, '');
+    } catch (e) {}
+  }
+  return null;
 }
 window.onNativePartial = (id, t) => { if (id === '__luigi' && t) $('lHeard').textContent = '„' + t + '“'; };
 window.onNativeRms = (v) => { const lv = Math.max(0, Math.min(1, (v + 2) / 12)).toFixed(2); $('lGlow').style.setProperty('--lv', lv); document.querySelector('.ldots').style.setProperty('--lv', Math.max(0, Math.min(1, (v + 2) / 12)).toFixed(2)); };
@@ -1700,7 +1759,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.5.0';
+const APP_VERSION = '2.5.1';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
