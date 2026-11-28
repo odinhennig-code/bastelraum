@@ -1025,7 +1025,13 @@ function luigiOpen() {
   const o = $('lPanel'); o.classList.remove('think'); o.classList.add('listen');
   setTimeout(() => { if (L.open) o.classList.add('open'); }, wasAway ? 330 : 0);
 }
-const LUIGI_OFF = false;   // Luigi vorübergehend aus (Bugs)
+// Luigi aus: entweder für alle Tablets (version.json „luigiOff“) oder nur hier (Systemverwaltung)
+const luigiIsOff = () => store.get('remoteLuigiOff', false) || store.get('luigiOff', false);
+function applyLuigiState() {
+  const off = luigiIsOff();
+  try { if (window.BastelOS && BastelOS.setWakeWord) BastelOS.setWakeWord(!off); } catch (e) {}
+  try { if (off && B.away) buddyHome(true); } catch (e) {}
+}
 function luigiOff() {
   if ($('lOff')) return;
   if (view.startsWith('night')) show('home');
@@ -1040,7 +1046,7 @@ function luigiOff() {
 }
 function luigiListen() {
   if (store.get('appLocked', false)) return;
-  if (LUIGI_OFF) { luigiOff(); return; }
+  if (luigiIsOff()) { luigiOff(); return; }
   luigiOpen();
   if (window.BastelOS && BastelOS.startSpeech) { BastelOS.startSpeech('__luigi'); return; }
   if (!SR) { luigiReply('Ich kann hier leider nicht zuhören. Nimm Chrome oder die Tablet-App.'); return; }
@@ -1055,7 +1061,7 @@ window.onNativePartial = (id, t) => { if (id === '__luigi' && t) $('lHeard').tex
 window.onNativeRms = (v) => { const lv = Math.max(0, Math.min(1, (v + 2) / 12)).toFixed(2); $('lGlow').style.setProperty('--lv', lv); document.querySelector('.ldots').style.setProperty('--lv', Math.max(0, Math.min(1, (v + 2) / 12)).toFixed(2)); };
 window.onWakeWord = (rest) => {
   if (store.get('appLocked', false)) return;
-  if (LUIGI_OFF) { luigiOff(); return; }
+  if (luigiIsOff()) { luigiOff(); return; }
   luigiOpen();
   if (rest && rest.trim().length > 2) { luigiHeard(rest.trim(), null); return; }
   if (window.BastelOS && BastelOS.startSpeech) BastelOS.startSpeech('__luigi');
@@ -1512,7 +1518,7 @@ async function buddyTrip() {
   await goHome(g);
 }
 setInterval(() => {
-  if (LUIGI_OFF) { if (B.away) buddyHome(true); return; }
+  if (luigiIsOff()) { if (B.away) buddyHome(true); return; }
   if (L.open) return;
   if (view !== 'home' || !store.get('luigiMove', true)) { if (B.away) buddyHome(true); return; }
   if (Date.now() < B.nextAt) return;
@@ -1657,7 +1663,7 @@ function luigiDo(raw) {
   return null;
 }
 window.onMotion = () => { if (view.startsWith('night')) { lastTouch = Date.now(); show('home'); } };
-if (window.BastelOS && BastelOS.setWakeWord) { try { BastelOS.setWakeWord(true); } catch (e) {} }
+applyLuigiState();
 
 /* =========================================================
    RUHEMODUS NACH 5 MINUTEN OHNE BEDIENUNG
@@ -1674,14 +1680,15 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.4.0';
+const APP_VERSION = '2.4.1';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
   try {
     const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) return;
-    const v = (await r.json()).version;
+    const j = await r.json(), v = j.version;
+    const ro = !!j.luigiOff; if (ro !== store.get('remoteLuigiOff', false)) { store.set('remoteLuigiOff', ro); applyLuigiState(); }
     if (v && v !== APP_VERSION) startUpdate(v);
   } catch (e) {}
 }
@@ -1913,6 +1920,7 @@ renderMsg(); renderRadio(); renderMats(); show('home');
       ['Funkmodule neu initialisieren', 'WLAN und Bluetooth zurücksetzen', fake(['Setze Module zurück', 'Initialisiere', 'Bereit'])],
     ] },
     { k: 'LGI', n: 'Assistent', c: '#C38BFF', items: [
+      ['Luigi aktiv', () => store.get('remoteLuigiOff', false) ? 'Für alle Tablets abgeschaltet' : ('Auf diesem Tablet: ' + (store.get('luigiOff', false) ? 'aus' : 'an')), () => { store.set('luigiOff', !store.get('luigiOff', false)); applyLuigiState(); setTimeout(render, 50); return fakeRun(['Luigi ' + (store.get('luigiOff', false) ? 'deaktiviert' : 'aktiviert')]); }],
       ['KI-Anbindung', () => 'Groq · Schlüssel ' + (store.get('aiKey', '') ? 'eingerichtet' : 'fehlt'), () => { const k = prompt('Groq-API-Schlüssel eingeben (leer lassen zum Entfernen):', ''); if (k === null) return 'Abgebrochen'; setAiKey(k); render(); return k.trim() ? 'Schlüssel gespeichert' : 'Schlüssel entfernt'; }],
       ['KI-Verbindung testen', 'Testfrage an das Sprachmodell senden', () => ({ lines: ['Sende Testfrage'], wait: askAI('Sag in einem kurzen Satz Hallo.').then((a) => ['Antwort: ' + a.slice(0, 60)]) })],
       ['Verhaltensmodell aktualisieren', 'Bewegungsabläufe neu berechnen', fake(['Lade 57 Verhaltensmuster', 'Epoche 1/3', 'Epoche 2/3', 'Epoche 3/3', 'Verlust 0,0012'])],
