@@ -192,10 +192,10 @@ function renderLog() {
 }
 
 /* ---------- Senden ---------- */
-async function send(text) {
+async function send(text, title) {
   text = String(text || '').trim(); if (!text) return;
   try {
-    const r = await fetch(NTFY + topicTablet(), { method: 'POST', body: text, headers: { Title: 'Odin' } });
+    const r = await fetch(NTFY + topicTablet(), { method: 'POST', body: text, headers: { Title: title || 'Odin' } });
     if (!r.ok) throw new Error(r.status);
     addLog('me', text); toast('Gesendet ✓');
     if (navigator.vibrate) navigator.vibrate(20);
@@ -255,7 +255,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 $('setBtn').onclick = () => { $('topicTxt').textContent = topicOdin(); $('codeTxt').textContent = key; show('vSet'); };
 $('setBack').onclick = () => show('vMain');
 $('copyTopic').onclick = async () => { try { await navigator.clipboard.writeText(topicOdin()); toast('Kopiert'); } catch (e) { toast('Bitte von Hand abschreiben'); } };
-$('testBtn').onclick = () => send('Test vom Handy – alles klappt!');
+$('testBtn').onclick = () => { send('Test vom Handy', 'Test'); toast('Test gesendet – das Tablet antwortet gleich im Verlauf'); };
 $('unpair').onclick = () => { if (es) es.close(); key = null; store.set('key', null); log = []; store.set('log', []); show('vPair'); };
 
 /* ---------- Start ---------- */

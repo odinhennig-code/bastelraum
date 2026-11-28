@@ -621,7 +621,11 @@ function listenHandy() {
   try {
     if (inbox) inbox.close();
     inbox = new EventSource(NTFY + topicTablet() + '/sse');
-    inbox.onmessage = (e) => { try { const m = JSON.parse(e.data); if (m.event === 'message' && m.message) receiveMessage(m.message); } catch (x) {} };
+    inbox.onmessage = (e) => { try {
+      const m = JSON.parse(e.data); if (m.event !== 'message' || !m.message) return;
+      if (m.title === 'Test') { sendToOdin('Das Tablet hat deinen Test bekommen ✓', { title: 'Bastelraum', priority: 3, tags: 'white_check_mark' }); say('Test vom Handy angekommen ✓'); return; }
+      receiveMessage(m.message);
+    } catch (x) {} };
   } catch (e) {}
 }
 listenHandy();
@@ -1446,7 +1450,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.0.1';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -1539,7 +1543,8 @@ async function openPairing() {
     + '<div style="display:flex;flex-direction:column;gap:12px;font-size:17px;line-height:1.45">'
     + '<span>Mit der iPhone-Kamera den Code scannen und den Link öffnen.</span>'
     + '<span class="muted" style="font-size:15px">Oder auf dem Handy <b>odinhennig-code.github.io/bastelraum/handy.html</b> öffnen und diesen Code eintippen:</span>'
-    + '<span class="num" style="font-size:30px;font-weight:600;letter-spacing:4px;color:#FFC56B">' + esc(pairKey()) + '</span></div></div>'
+    + '<span class="num" style="font-size:30px;font-weight:600;letter-spacing:4px;color:#FFC56B">' + esc(pairKey()) + '</span>'
+    + '<span class="muted" style="font-size:14px">Empfang: ' + (inbox && inbox.readyState === 1 ? 'verbunden ✓' : 'getrennt') + ' · Dashboard ' + APP_VERSION + '</span></div></div>'
     + '<div style="display:flex;gap:10px"><button id="pairTest" class="gb pill" style="flex:1;height:52px;font-size:16px">Test ans Handy</button><button id="sCancel" class="accent pill" style="flex:1;height:52px;font-size:16px">Fertig</button></div>';
   $('sCancel').onclick = closeSheet;
   $('pairTest').onclick = async () => { if (await sendToOdin('Test vom Tablet – die Verbindung klappt!', { title: 'Bastelraum', priority: 3, tags: 'tada' })) say('Test ans Handy gesendet'); };
