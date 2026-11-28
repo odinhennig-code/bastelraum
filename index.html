@@ -16,6 +16,26 @@ html,body{margin:0;height:100%;background:#07080C;overflow:hidden;-webkit-tap-hi
 body{font-family:Outfit,system-ui,sans-serif;color:#fff}
 button,input{font-family:inherit;color:#fff}
 button{cursor:pointer}
+#lOff{position:absolute;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;background:rgba(5,6,10,0);transition:background .35s,opacity .4s;pointer-events:auto}
+#lOff.on{background:rgba(5,6,10,.88)}
+#lOff.out{opacity:0}
+#lOff .ln{position:absolute;left:0;right:0;top:50%;height:4px;margin-top:-2px;background:linear-gradient(90deg,#ff2a3a00,#ff2a3a 18%,#ff5a66 50%,#ff2a3a 82%,#ff2a3a00);box-shadow:0 0 24px #ff2a3a,0 0 6px #ff5a66;transform:scaleX(0);transform-origin:0 50%}
+#lOff.on .ln{animation:lOffLn .9s cubic-bezier(.7,0,.3,1) forwards}
+@keyframes lOffLn{0%{transform:scaleX(0);opacity:1}45%{transform:scaleX(1);transform-origin:0 50%;opacity:1}55%{transform:scaleX(1);opacity:1}100%{transform:scaleX(0);transform-origin:100% 50%;opacity:0}}
+#lOff .rg{position:absolute;left:50%;top:50%;width:230px;height:230px;margin:-115px 0 0 -115px;border-radius:50%;border:4px solid #ff2a3a;box-shadow:0 0 40px rgba(255,42,58,.55),inset 0 0 40px rgba(255,42,58,.35);transform:scale(0);opacity:0}
+#lOff.on .rg{animation:lOffRg .7s .55s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes lOffRg{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+#lOff .rg::after{content:'';position:absolute;left:50%;top:50%;width:150%;height:4px;margin:-2px 0 0 -75%;background:#ff2a3a;transform:rotate(-45deg) scaleX(0);box-shadow:0 0 16px #ff2a3a}
+#lOff.on .rg::after{animation:lOffX .35s 1.15s ease-out forwards}
+@keyframes lOffX{to{transform:rotate(-45deg) scaleX(.66)}}
+#lOff .tx{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:330px;text-align:center}
+#lOff .t1{font-size:56px;font-weight:700;letter-spacing:1px;opacity:0;transform:translateY(14px)}
+#lOff .t2{font-size:24px;color:rgba(255,255,255,.75);opacity:0;transform:translateY(14px)}
+#lOff.on .t1{animation:lOffT .5s 1.3s ease-out forwards}
+#lOff.on .t2{animation:lOffT .5s 1.55s ease-out forwards}
+@keyframes lOffT{to{opacity:1;transform:none}}
+#lOff .sp{position:absolute;left:50%;top:50%;width:150px;height:140px;margin:-95px 0 0 -75px;opacity:0;filter:grayscale(1) brightness(.8)}
+#lOff.on .sp{animation:lOffT .5s 1s ease-out forwards}
 #stage{position:fixed;left:0;top:0;width:1280px;height:800px;transform-origin:0 0;overflow:hidden;background:#07080C}
 .hidden{display:none!important}
 .num{font-variant-numeric:tabular-nums}
@@ -952,7 +972,18 @@ function luigiOpen() {
   setTimeout(() => { if (L.open) o.classList.add('open'); }, wasAway ? 330 : 0);
 }
 const LUIGI_OFF = true;   // Luigi vorübergehend aus (Bugs)
-function luigiOff() { luigiOpen(); $('lHeard').textContent = ''; luigiReply('Luigi ist vorübergehend deaktiviert aufgrund von Bugs.'); }
+function luigiOff() {
+  if ($('lOff')) return;
+  if (view.startsWith('night')) show('home');
+  const o = document.createElement('div'); o.id = 'lOff';
+  o.innerHTML = '<div class="ln"></div><div class="rg"></div><canvas class="sp" width="150" height="140"></canvas><div class="tx"><span class="t1">Luigi</span><span class="t2">ist vorübergehend deaktiviert</span></div>';
+  $('stage').appendChild(o);
+  try { const sp = o.querySelector('.sp'), cx = sp.getContext('2d'), f = SPR.meta && SPR.meta.pose && (SPR.meta.pose.shrug || SPR.meta.pose.front); if (f && SPR.img.complete) { const r = Array.isArray(f[0]) ? f[0] : f; const k = Math.min(140 / r[3], 150 / r[2]); cx.drawImage(SPR.img, r[0], r[1], r[2], r[3], (150 - r[2] * k) / 2, 140 - r[3] * k, r[2] * k, r[3] * k); } } catch (e) {}
+  requestAnimationFrame(() => requestAnimationFrame(() => o.classList.add('on')));
+  const end = () => { o.classList.add('out'); setTimeout(() => o.remove(), 420); };
+  const t = setTimeout(end, 2050 + 2000);
+  o.onclick = () => { clearTimeout(t); end(); };
+}
 function luigiListen() {
   if (LUIGI_OFF) { luigiOff(); return; }
   luigiOpen();
@@ -1542,7 +1573,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.1.3';
+const APP_VERSION = '2.1.4';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
