@@ -1820,7 +1820,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.6.0';
+const APP_VERSION = '2.6.1';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -2364,7 +2364,7 @@ function cssOv(cls, ms) { const o = document.createElement('div'); o.className =
 
 /* ---------- Fernsteuerung (von Odins Steuer-Webseite) ---------- */
 const topicStatus = () => 'bastelraum-' + pairKey().toLowerCase() + '-status';
-function remoteState() { return { v: APP_VERSION, app: (window.BastelOS && BastelOS.version) ? BastelOS.version() : null, locked: store.get('appLocked', false), lock: store.get('lockOpts', {}), view, luigi: !luigiIsOff(), radio: !!playing, ai: !!store.get('aiKey', ''), at: Date.now() }; }
+function remoteState() { return { v: APP_VERSION, app: (window.BastelOS && BastelOS.version) ? BastelOS.version() : null, locked: store.get('appLocked', false), lock: store.get('lockOpts', {}), view, luigi: !luigiIsOff(), radio: !!playing, ai: !!store.get('aiKey', ''), schedules: store.get('schedules', []), at: Date.now() }; }
 function reportStatus(info) { try { fetch(NTFY + topicStatus(), { method: 'POST', body: JSON.stringify({ info: info || '', state: remoteState() }) }).catch(() => {}); } catch (e) {} }
 function remoteCmd(c) {
   if (!c || !c.cmd) return;
@@ -2385,6 +2385,7 @@ function remoteCmd(c) {
     case 'admin': try { c.on ? openAdmin() : closeAdmin(); } catch (e) {} info = 'Systemverwaltung ' + (c.on ? 'offen' : 'zu'); break;
     case 'reload': reportStatus('Lädt neu …'); setTimeout(() => location.reload(), 800); return;
     case 'update': try { checkUpdate(); } catch (e) {} info = 'Suche nach Updates'; break;
+    case 'schedules': store.set('schedules', Array.isArray(c.list) ? c.list.slice(0, 12) : []); store.set('schedSkip', ''); scheduleTick(); info = 'Zeitpläne gespeichert (' + (store.get('schedules', []).length) + ')'; break;
     case 'appUpdate': appUpdate(!!c.force).then((m) => reportStatus(m)); return;
     default: info = 'Unbekannter Befehl';
   }
@@ -2404,6 +2405,42 @@ async function appUpdate(force) {
   BastelOS.installUpdate(a.url); return 'Lade Tablet-App ' + a.version;
 }
 window.onApkStatus = (m) => { say(m); reportStatus(m); };
+
+/* ---------- Zeitpläne: automatisch sperren (z. B. Feierabend) ---------- */
+const toMin = (hm) => { const m = String(hm || '').match(/(\d+):(\d+)/); return m ? +m[1] * 60 + +m[2] : null; };
+function activeSchedule(now) {
+  const list = store.get('schedules', []) || [];
+  const d = now.getDay(), mins = now.getHours() * 60 + now.getMinutes();
+  for (let i = 0; i < list.length; i++) {
+    const sc = list[i]; if (!sc || sc.on === false) continue;
+    const a = toMin(sc.from), b = toMin(sc.to); if (a == null || b == null || a === b) continue;
+    const days = sc.days && sc.days.length ? sc.days : [0, 1, 2, 3, 4, 5, 6];
+    if (a < b) { if (days.includes(d) && mins >= a && mins < b) return { sc, key: i + '|' + now.toDateString() }; }
+    else {
+      if (days.includes(d) && mins >= a) return { sc, key: i + '|' + now.toDateString() };
+      const y = new Date(now.getTime() - 86400000);
+      if (days.includes(y.getDay()) && mins < b) return { sc, key: i + '|' + y.toDateString() };
+    }
+  }
+  return null;
+}
+function scheduleTick() {
+  const hit = activeSchedule(new Date());
+  if (hit) {
+    if (store.get('schedSkip', '') === hit.key) return;
+    if (!store.get('appLocked', false)) { lockApp(true, { style: hit.sc.style || 'feierabend', title: hit.sc.title || '', text: hit.sc.text || '', until: 0, from: 'Automatische Sperre bis ' + hit.sc.to + ' Uhr', sched: hit.key }); reportStatus('Zeitplan: gesperrt'); }
+  } else {
+    const o = store.get('lockOpts', {}) || {};
+    if (store.get('appLocked', false) && o.sched) { lockApp(false); reportStatus('Zeitplan: entsperrt'); }
+  }
+}
+/* Manuell entsperrt während eines Zeitplans → bis zu dessen Ende nicht wieder sperren */
+const _lockApp = lockApp;
+lockApp = function (on, opts) {
+  if (!on) { const hit = activeSchedule(new Date()); if (hit) store.set('schedSkip', hit.key); }
+  return _lockApp(on, opts);
+};
+setInterval(scheduleTick, 30000); setTimeout(scheduleTick, 3000);
 
 /* ---------- Herzschlag an die Steuer-Seite ---------- */
 setTimeout(() => reportStatus('Tablet gestartet'), 4000);

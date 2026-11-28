@@ -51,7 +51,16 @@ textarea.field{resize:vertical;min-height:70px}
 .pair{max-width:420px;margin:12vh auto 0}
 .hidden{display:none!important}
 .range{width:100%;accent-color:#fff}
-@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.sch{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:10px;display:flex;flex-direction:column;gap:9px}
+.sch .r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sch input[type=time],.sch select{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:7px 9px;color:#fff;color-scheme:dark}
+.day{width:34px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:none;cursor:pointer;font-size:12.5px;color:rgba(255,255,255,.6)}
+.day.on{background:#fff;color:#111;border-color:#fff}
+.x{margin-left:auto;background:none;border:0;color:rgba(255,255,255,.4);cursor:pointer;font-size:18px}
+.empty{font-size:13px;color:rgba(255,255,255,.35);padding:4px 0 2px}
+.grid>*{min-width:0}
+@media (max-width:1100px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:700px){.wrap{padding:18px 14px 40px}.tiles{grid-template-columns:repeat(2,1fr)}header{flex-direction:column;align-items:flex-start;gap:10px}.day{width:30px}}
 </style>
 </head>
 <body>
@@ -74,6 +83,7 @@ textarea.field{resize:vertical;min-height:70px}
 
   <div class="grid">
     <!-- Sperren -->
+    <div style="display:flex;flex-direction:column;gap:18px">
     <div class="card">
       <h2>Sperren</h2>
       <div class="hint">Sperrbildschirm wählen, Text anpassen und Dauer festlegen.</div>
@@ -88,6 +98,13 @@ textarea.field{resize:vertical;min-height:70px}
       <input id="lkFrom" class="field" placeholder="z. B. Gesperrt durch die Systemverwaltung">
       <div class="preview" id="prev"></div>
       <div class="row"><button id="lockBtn" class="btn main">Tablet sperren</button><button id="unlockBtn" class="btn">Entsperren</button></div>
+    </div>
+    <div class="card">
+      <h2>Zeitpläne</h2>
+      <div class="hint">Sperrt das Tablet automatisch, z. B. jeden Abend ab 22 Uhr. Wird manuell entsperrt, bleibt es bis zum Ende des Zeitraums offen.</div>
+      <div id="schedList"></div>
+      <div class="row"><button id="schedAdd" class="btn">+ Zeitplan</button><button id="schedSend" class="btn main">An Tablet senden</button></div>
+    </div>
     </div>
 
     <!-- Nachrichten & Animationen -->
@@ -211,12 +228,36 @@ $('sayBtn').onclick = () => { const t = [$('mTitle').value.trim(), $('mText').va
 ].forEach(([l, s, c]) => { const b = document.createElement('button'); b.className = 'tile'; b.innerHTML = esc(l) + (s ? '<small>' + esc(s) + '</small>' : ''); b.onclick = () => send(c, l + (s ? ' ' + s : '')); $('acts').appendChild(b); });
 let bT = 0; $('bright').addEventListener('input', () => { clearTimeout(bT); bT = setTimeout(() => send({ cmd: 'bright', value: $('bright').value / 100 }, 'Helligkeit ' + $('bright').value + ' %'), 300); });
 
+/* ---------- Zeitpläne ---------- */
+const DAYN = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'], DORDER = [1, 2, 3, 4, 5, 6, 0];
+let scheds = store.get('scheds', []);
+function renderScheds() {
+  const box = $('schedList'); box.innerHTML = scheds.length ? '' : '<div class="empty">Noch kein Zeitplan.</div>';
+  scheds.forEach((sc, i) => {
+    const d = document.createElement('div'); d.className = 'sch';
+    d.innerHTML = '<div class="r">' + DORDER.map((k) => '<button class="day' + (sc.days.includes(k) ? ' on' : '') + '" data-d="' + k + '">' + DAYN[k] + '</button>').join('') + '<button class="x" title="Löschen">×</button></div>'
+      + '<div class="r"><input type="time" class="f" value="' + sc.from + '"> bis <input type="time" class="t" value="' + sc.to + '"><select class="s">' + STYLES.map((x) => '<option value="' + x[0] + '"' + (x[0] === sc.style ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select>'
+      + '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:rgba(255,255,255,.6)"><input type="checkbox" class="o"' + (sc.on !== false ? ' checked' : '') + '>aktiv</label></div>';
+    d.querySelectorAll('.day').forEach((b) => b.onclick = () => { const k = +b.dataset.d; sc.days = sc.days.includes(k) ? sc.days.filter((x) => x !== k) : sc.days.concat(k); save(); });
+    d.querySelector('.x').onclick = () => { scheds.splice(i, 1); save(); };
+    d.querySelector('.f').onchange = (e) => { sc.from = e.target.value; save(false); };
+    d.querySelector('.t').onchange = (e) => { sc.to = e.target.value; save(false); };
+    d.querySelector('.s').onchange = (e) => { sc.style = e.target.value; save(false); };
+    d.querySelector('.o').onchange = (e) => { sc.on = e.target.checked; save(false); };
+    box.appendChild(d);
+  });
+  function save(re) { store.set('scheds', scheds); if (re !== false) renderScheds(); }
+}
+$('schedAdd').onclick = () => { scheds.push({ days: [0, 1, 2, 3, 4, 5, 6], from: '22:00', to: '07:00', style: 'feierabend', on: true }); store.set('scheds', scheds); renderScheds(); };
+$('schedSend').onclick = () => send({ cmd: 'schedules', list: scheds }, 'Zeitpläne senden (' + scheds.length + ')');
+renderScheds();
+
 /* ---------- Status ---------- */
 const VIEWS = { home: 'Startseite', night: 'Nachtmodus', night2: 'Bildschirmschoner' };
 function showState(st) {
   lastSeen = Date.now();
   const lk = st.locked ? (STYLES.find((x) => x[0] === (st.lock && st.lock.style)) || STYLES[0])[1] : 'nein';
-  $('kv').innerHTML = [['Dashboard', st.v], ['Tablet-App', st.app || '–'], ['Gesperrt', lk], ['Ansicht', VIEWS[st.view] || st.view || '–'], ['Luigi', st.luigi ? 'an' : 'aus'], ['Radio', st.radio ? 'läuft' : 'aus'], ['KI', st.ai ? 'eingerichtet' : 'fehlt']].map(([a, b]) => '<span>' + esc(a) + '</span><span>' + esc(b) + '</span>').join('');
+  $('kv').innerHTML = [['Dashboard', st.v], ['Tablet-App', st.app || '–'], ['Gesperrt', lk], ['Ansicht', VIEWS[st.view] || st.view || '–'], ['Luigi', st.luigi ? 'an' : 'aus'], ['Radio', st.radio ? 'läuft' : 'aus'], ['KI', st.ai ? 'eingerichtet' : 'fehlt'], ['Zeitpläne', st.schedules ? String(st.schedules.length) : '–']].map(([a, b]) => '<span>' + esc(a) + '</span><span>' + esc(b) + '</span>').join('');
   paintDot();
 }
 function paintDot() {
