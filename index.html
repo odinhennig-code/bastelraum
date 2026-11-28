@@ -1029,7 +1029,7 @@ function luigiOpen() {
 const luigiIsOff = () => store.get('remoteLuigiOff', false) || store.get('luigiOff', false);
 function applyLuigiState() {
   const off = luigiIsOff();
-  try { if (window.BastelOS && BastelOS.setWakeWord) BastelOS.setWakeWord(!off); } catch (e) {}
+  try { if (window.BastelOS && BastelOS.setWakeWord) BastelOS.setWakeWord(!off && store.get('wakeWord', false)); } catch (e) {}
   try { if (off && B.away) buddyHome(true); } catch (e) {}
 }
 function luigiOff() {
@@ -1069,7 +1069,8 @@ window.onWakeWord = (rest) => {
 function luigiHeard(text, error) {
   const o = $('lPanel'); o.classList.remove('listen');
   if (error === 'nichts gehört' || (!error && !text)) { $('lHeard').textContent = 'Ich hab nichts gehört.'; clearTimeout(L.closeT); L.closeT = setTimeout(luigiClose, 1600); return; }
-  if (error) { luigiReply('Das hab ich nicht verstanden. Tipp mich an und sag es nochmal.'); return; }
+  if (error === 'nicht verstanden') { $('lHeard').textContent = 'Das hab ich nicht ganz verstanden.'; clearTimeout(L.closeT); L.closeT = setTimeout(luigiClose, 1800); return; }
+  if (error) { luigiReply('Ich kann gerade nicht zuhören. Versuch es gleich nochmal.'); return; }
   $('lHeard').textContent = '„' + text.charAt(0).toUpperCase() + text.slice(1) + '“';
   o.classList.add('think');
   setTimeout(async () => {
@@ -1680,7 +1681,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.4.1';
+const APP_VERSION = '2.4.2';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -1688,6 +1689,7 @@ async function checkUpdate() {
     const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) return;
     const j = await r.json(), v = j.version;
+    if (j.unlock && j.unlock !== store.get('unlockSeen', null)) { store.set('unlockSeen', j.unlock); try { lockApp(false); } catch (e) {} }
     const ro = !!j.luigiOff; if (ro !== store.get('remoteLuigiOff', false)) { store.set('remoteLuigiOff', ro); applyLuigiState(); }
     if (v && v !== APP_VERSION) startUpdate(v);
   } catch (e) {}
@@ -1921,6 +1923,7 @@ renderMsg(); renderRadio(); renderMats(); show('home');
     ] },
     { k: 'LGI', n: 'Assistent', c: '#C38BFF', items: [
       ['Luigi aktiv', () => store.get('remoteLuigiOff', false) ? 'Für alle Tablets abgeschaltet' : ('Auf diesem Tablet: ' + (store.get('luigiOff', false) ? 'aus' : 'an')), () => { store.set('luigiOff', !store.get('luigiOff', false)); applyLuigiState(); setTimeout(render, 50); return fakeRun(['Luigi ' + (store.get('luigiOff', false) ? 'deaktiviert' : 'aktiviert')]); }],
+      ['Weckwort „Hey Luigi“', () => 'Dauerhaft zuhören: ' + (store.get('wakeWord', false) ? 'an' : 'aus (nur Antippen)'), () => { store.set('wakeWord', !store.get('wakeWord', false)); applyLuigiState(); setTimeout(render, 50); return fakeRun(['Weckwort ' + (store.get('wakeWord', false) ? 'an' : 'aus')]); }],
       ['KI-Anbindung', () => 'Groq · Schlüssel ' + (store.get('aiKey', '') ? 'eingerichtet' : 'fehlt'), () => { const k = prompt('Groq-API-Schlüssel eingeben (leer lassen zum Entfernen):', ''); if (k === null) return 'Abgebrochen'; setAiKey(k); render(); return k.trim() ? 'Schlüssel gespeichert' : 'Schlüssel entfernt'; }],
       ['KI-Verbindung testen', 'Testfrage an das Sprachmodell senden', () => ({ lines: ['Sende Testfrage'], wait: askAI('Sag in einem kurzen Satz Hallo.').then((a) => ['Antwort: ' + a.slice(0, 60)]) })],
       ['Verhaltensmodell aktualisieren', 'Bewegungsabläufe neu berechnen', fake(['Lade 57 Verhaltensmuster', 'Epoche 1/3', 'Epoche 2/3', 'Epoche 3/3', 'Verlust 0,0012'])],
@@ -2111,6 +2114,7 @@ function lockApp(on) {
   try { if (on && L.open) luigiClose(); } catch (e) {}
 }
 if (store.get('appLocked', false)) lockApp(true);
+{ let lp = 0; const ic = lockEl.querySelector('svg'); ic.addEventListener('pointerdown', () => { clearTimeout(lp); lp = setTimeout(() => { window.openAdmin && openAdmin(); }, 3000); }); ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => ic.addEventListener(ev, () => clearTimeout(lp))); }
 { let t = []; lockEl.addEventListener('pointerdown', (e) => { if (e.clientY > 120 || e.clientX < window.innerWidth - 160) { t = []; return; } const n = Date.now(); t = t.filter((x) => n - x < 2500); t.push(n); if (t.length >= 7) { t = []; window.openAdmin && openAdmin(); } }); }
 </script>
 </body>

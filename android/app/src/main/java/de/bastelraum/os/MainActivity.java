@@ -44,7 +44,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final String URL = "https://odinhennig-code.github.io/bastelraum/";
-    private static final String VERSION = "1.9";
+    private static final String VERSION = "2.0";
 
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -544,6 +544,7 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public void speak(final String text) {
             ui.post(new Runnable() { @Override public void run() {
+                unmuteBeeps();
                 if (ttsReady) tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "luigi");
             } });
         }
@@ -561,7 +562,8 @@ public class MainActivity extends Activity {
                 ArrayList<String> m = r.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 String text = m != null && !m.isEmpty() ? m.get(0) : "";
                 if ("cmd".equals(mode)) {
-                    mode = "idle";
+                    mode = "idle"; unmuteSoon();
+                    if (text.trim().isEmpty()) text = lastPartial;
                     js("window.onNativeSpeech && window.onNativeSpeech(" + q(speechTarget) + "," + q(text) + ",null)");
                     restartWake(2500);
                 } else if ("wake".equals(mode)) {
@@ -577,16 +579,21 @@ public class MainActivity extends Activity {
             }
             @Override public void onPartialResults(Bundle p) {
                 if (!"cmd".equals(mode)) return;
-                cmdHeard = true;
                 ArrayList<String> m = p.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                if (m != null && !m.isEmpty() && !m.get(0).trim().isEmpty()) lastPartial = m.get(0);
                 if (m != null && !m.isEmpty()) js("window.onNativePartial && window.onNativePartial(" + q(speechTarget) + "," + q(m.get(0)) + ")");
             }
             @Override public void onError(int error) {
                 if ("cmd".equals(mode)) {
+                    if (!lastPartial.trim().isEmpty()) {          // schon etwas verstanden: das nehmen statt Fehler
+                        mode = "idle"; unmuteSoon();
+                        js("window.onNativeSpeech && window.onNativeSpeech(" + q(speechTarget) + "," + q(lastPartial) + ",null)");
+                        restartWake(2500); return;
+                    }
                     boolean quiet = error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT;
                     boolean glitch = error == SpeechRecognizer.ERROR_CLIENT || error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY;
                     if ((glitch || (quiet && !cmdHeard)) && retryCmd()) return;   // Fehlstart: still weiter zuhören
-                    mode = "idle";
+                    mode = "idle"; unmuteSoon();
                     String msg = quiet ? (cmdHeard ? "nicht verstanden" : "nichts gehört") : "Spracheingabe gerade nicht möglich";
                     js("window.onNativeSpeech && window.onNativeSpeech(" + q(speechTarget) + ",''," + q(msg) + ")");
                     restartWake(2500);
@@ -603,9 +610,9 @@ public class MainActivity extends Activity {
                 js("window.onNativeRms && window.onNativeRms(" + v + ")");
             }
             @Override public void onReadyForSpeech(Bundle p) {}
-            @Override public void onBeginningOfSpeech() { if ("cmd".equals(mode)) cmdHeard = true; }
+            @Override public void onBeginningOfSpeech() {}
             @Override public void onBufferReceived(byte[] b) {}
-            @Override public void onEndOfSpeech() { muteFor(1200); }
+            @Override public void onEndOfSpeech() { if (!"cmd".equals(mode)) muteFor(1200); }
             @Override public void onEvent(int t, Bundle p) {}
         });
     }
@@ -664,12 +671,14 @@ public class MainActivity extends Activity {
         ensureRecognizer();
         boolean wasWaking = "wake".equals(mode);
         try { speech.cancel(); } catch (Exception ignored) {}
-        muteBeeps();
-        mode = "cmd"; cmdHeard = false; cmdRetries = 0;
+        muteFor(20000);
+        mode = "cmd"; cmdHeard = false; cmdRetries = 0; lastPartial = "";
         ui.postDelayed(new Runnable() { @Override public void run() { startCmd(); } }, wasWaking ? 350 : 60);
     }
 
     private boolean cmdHeard = false;
+    private String lastPartial = "";
+    private void unmuteSoon() { ui.removeCallbacks(unmuteRunner); ui.postDelayed(unmuteRunner, 650); }
     private int cmdRetries = 0;
     private void startCmd() {
         if (!"cmd".equals(mode)) return;
@@ -677,7 +686,7 @@ public class MainActivity extends Activity {
         catch (Exception e) { retryCmd(); }
     }
     private boolean retryCmd() {
-        if (cmdRetries >= 2) return false;
+        if (cmdRetries >= 3) return false;
         cmdRetries++;
         try { speech.cancel(); } catch (Exception ignored) {}
         ui.postDelayed(new Runnable() { @Override public void run() { startCmd(); } }, 400);
