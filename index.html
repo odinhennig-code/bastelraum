@@ -1152,13 +1152,74 @@ function luigiHeard(text, error) {
   $('lHeard').textContent = '„' + text.charAt(0).toUpperCase() + text.slice(1) + '“';
   o.classList.add('think');
   setTimeout(async () => {
+    if (store.get('aiKey', '')) {
+      const res = await luigiBrain(text);
+      if (!L.open) return;
+      if (res) { luigiReply(res); return; }
+    }
     let r = null; try { r = luigiDo(text); } catch (e) {}
-    if (r != null) { luigiReply(r); return; }
-    if (!store.get('aiKey', '')) { luigiReply('Das hab ich nicht verstanden. Sag zum Beispiel: Stell einen Timer auf 10 Minuten.'); return; }
-    $('lHeard').textContent = '„' + text.charAt(0).toUpperCase() + text.slice(1) + '“';
-    const a = await askAI(text);
-    if (L.open) luigiReply(a);
-  }, 450);
+    luigiReply(r != null ? r : 'Das hab ich nicht verstanden. Sag zum Beispiel: Stell einen Timer auf 10 Minuten.');
+  }, 300);
+}
+
+/* KI versteht freie Sätze und löst echte Aktionen aus (über die festen Befehle) */
+function luigiContext() {
+  const tl = timers.map((t) => durText(left(t)) + (t.pausedLeft != null ? ' (pausiert)' : '')).join(', ');
+  return [
+    'Uhrzeit: ' + new Date().toLocaleString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }),
+    'Timer: ' + (tl || 'keiner'),
+    'Stoppuhr: ' + (swStart ? 'läuft' : 'steht') + ' (' + $('swTime').textContent + ')',
+    'Radio: ' + (playing ? 'läuft, ' + STATIONS[station].name : 'aus') + '. Sender: ' + STATIONS.map((x) => x.name).join(', '),
+    'Wetter: ' + (weather ? weather.temp + ' Grad, ' + weather.desc : 'unbekannt'),
+    'Material auf der Liste: ' + (mats.slice(0, 25).map((m) => m.qty + '× ' + m.name).join(', ') || 'nichts'),
+  ].join('\n');
+}
+function luigiExec(cmd) {
+  const c = String(cmd || '').trim(); const lc = c.toLowerCase();
+  try {
+    let m = c.match(/^odin schreiben:\s*(.+)$/i);
+    if (m) { sendToOdin(m[1], { title: 'Nachricht von Mama' }); sndSend(); return; }
+    m = c.match(/^material:\s*(\d+)?\s*(.+)$/i);
+    if (m) { const n = +(m[1] || 1), name = m[2].trim().replace(/^./, (x) => x.toUpperCase()); const ex = mats.find((x) => x.name.toLowerCase() === name.toLowerCase()); if (ex) ex.qty += n; else mats.push({ id: Date.now(), name, qty: n, price: 0 }); saveAll(); return; }
+    if (lc === 'odin rufen') { $('callBtn').click(); return; }
+    if (lc === 'stoppuhr start') { luigiDo('stoppuhr'); return; }
+    luigiDo(lc);
+  } catch (e) {}
+}
+async function luigiBrain(q) {
+  const sys = 'Du bist Luigi, ein freundlicher kleiner Sprachassistent auf dem Tablet im Bastelraum. Du sprichst mit Mama, die dort bastelt und einen Etsy-Shop mit Handgemachtem betreibt. Ihr Sohn heißt Odin.\n'
+    + 'Du kannst das Tablet steuern. Erlaubte Befehle, genau so schreiben:\n'
+    + '"timer N minuten", "timer N sekunden", "timer N stunden", "timer stopp", "timer pause", "timer weiter", "stoppuhr start", "stoppuhr stopp", "stoppuhr zurück", '
+    + '"radio an", "radio aus", "radio lauter", "radio leiser", "radio nächster", "radio <Sendername>", "odin rufen", "odin schreiben: <Text>", "material: <Anzahl> <Name>", "material zeigen", "nachtmodus", "startseite", "einstellungen".\n'
+    + 'Antworte NUR mit JSON: {"say": "kurze Antwort zum Vorlesen", "do": ["befehl", ...]}. "do" ist leer, wenn nichts zu tun ist. '
+    + '"say": Deutsch, natürlich, höchstens zwei Sätze, keine Emojis, kein Markdown. Sag ehrlich, wenn du etwas nicht weißt. Erfinde keine Befehle.\n'
+    + 'Aktueller Zustand:\n' + luigiContext();
+  if (Date.now() - aiHistAt > 3 * 60 * 1000) aiHist = [];
+  aiHistAt = Date.now();
+  const msgs = [{ role: 'system', content: sys }].concat(aiHist, [{ role: 'user', content: q }]);
+  let models = AI_MODELS.slice(); const good = store.get('aiModel', null); if (good) models = [good].concat(models.filter((m) => m !== good));
+  for (const model of models) {
+    try {
+      const body = { model, messages: msgs, max_tokens: 400, temperature: .4, response_format: { type: 'json_object' } };
+      if (model.indexOf('gpt-oss') >= 0) body.reasoning_effort = 'low';
+      const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 12000);
+      const r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + store.get('aiKey', '') }, body: JSON.stringify(body) });
+      clearTimeout(to);
+      if (r.status === 401) return 'Mein KI-Schlüssel stimmt nicht. Sag Odin Bescheid.';
+      if (r.status === 429) return null;
+      if (!r.ok) continue;
+      const j = await r.json();
+      const raw = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
+      let o; try { o = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1)); } catch (e) { continue; }
+      const say = String(o.say || '').replace(/[*#_`]/g, '').trim();
+      const todo = Array.isArray(o.do) ? o.do.slice(0, 4) : [];
+      store.set('aiModel', model);
+      todo.forEach((c, i) => setTimeout(() => luigiExec(c), 150 * i));
+      aiHist.push({ role: 'user', content: q }, { role: 'assistant', content: raw }); aiHist = aiHist.slice(-8);
+      return say || (todo.length ? 'Erledigt.' : null);
+    } catch (e) {}
+  }
+  return null;
 }
 
 /* ---------- Echte KI (Groq, kostenlos) ---------- */
@@ -1759,7 +1820,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.5.1';
+const APP_VERSION = '2.6.0';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -1957,6 +2018,7 @@ renderMsg(); renderRadio(); renderMats(); show('home');
       ['Zurück zum Dashboard', 'Systemverwaltung schließen', real(0), 'exit'],
       ['Oberfläche neu laden', 'Dashboard komplett neu laden', real(1)],
       ['Nach Updates suchen', 'Nach neuer Version suchen', real(2)],
+      ['Tablet-App aktualisieren', () => 'Installiert: ' + ((window.BastelOS && BastelOS.version) ? BastelOS.version() : '–'), () => ({ lines: ['Prüfe Version'], wait: appUpdate(false).then((m) => [m]) })],
       ['Android-Einstellungen', 'Normale Android-Einstellungen öffnen', real(3), 'warn'],
       ['Kiosk-Modus verlassen', 'App beenden, normales Android zeigen', real(4), 'warn'],
       ['Bildschirm ausschalten', 'Bildschirm sofort ausschalten', real(5)],
@@ -2323,11 +2385,29 @@ function remoteCmd(c) {
     case 'admin': try { c.on ? openAdmin() : closeAdmin(); } catch (e) {} info = 'Systemverwaltung ' + (c.on ? 'offen' : 'zu'); break;
     case 'reload': reportStatus('Lädt neu …'); setTimeout(() => location.reload(), 800); return;
     case 'update': try { checkUpdate(); } catch (e) {} info = 'Suche nach Updates'; break;
+    case 'appUpdate': appUpdate(!!c.force).then((m) => reportStatus(m)); return;
     default: info = 'Unbekannter Befehl';
   }
   reportStatus(info);
 }
 window.remoteCmd = remoteCmd;
+
+/* ---------- Tablet-App selbst aktualisieren ---------- */
+async function appUpdateInfo() {
+  try { const r = await fetch('app.json?t=' + Date.now(), { cache: 'no-store' }); return await r.json(); } catch (e) { return null; }
+}
+async function appUpdate(force) {
+  if (!(window.BastelOS && BastelOS.installUpdate)) { say('Selbst-Update geht erst ab Tablet-App 2.1'); return 'Tablet-App zu alt für Selbst-Update'; }
+  const a = await appUpdateInfo(); if (!a) return 'Keine Update-Infos';
+  const cur = BastelOS.version();
+  if (!force && a.version === cur) { say('Tablet-App ist aktuell (' + cur + ')'); return 'Tablet-App ist aktuell'; }
+  BastelOS.installUpdate(a.url); return 'Lade Tablet-App ' + a.version;
+}
+window.onApkStatus = (m) => { say(m); reportStatus(m); };
+
+/* ---------- Herzschlag an die Steuer-Seite ---------- */
+setTimeout(() => reportStatus('Tablet gestartet'), 4000);
+setInterval(() => reportStatus(''), 5 * 60 * 1000);
 </script>
 </body>
 </html>

@@ -43,8 +43,14 @@ import java.util.Locale;
 
 public class MainActivity extends Activity {
 
+    private static MainActivity inst;
+    static void reportUpdate(final String msg) {
+        final MainActivity a = inst; if (a == null) return;
+        a.ui.post(new Runnable() { @Override public void run() { a.js("window.onApkStatus && window.onApkStatus(" + a.q(msg) + ")"); } });
+    }
+
     private static final String URL = "https://odinhennig-code.github.io/bastelraum/";
-    private static final String VERSION = "2.0";
+    private static final String VERSION = "2.1";
 
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -96,6 +102,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        inst = this;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                 | WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
@@ -470,6 +477,17 @@ public class MainActivity extends Activity {
     private class Bridge {
         @JavascriptInterface public boolean isApp() { return true; }
         @JavascriptInterface public String version() { return VERSION; }
+        @JavascriptInterface public void installUpdate(final String url) {
+            ui.post(new Runnable() { @Override public void run() {
+                if (Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
+                    Intent in = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:" + getPackageName()));
+                    safeStart(in);
+                    reportUpdate("Bitte „Aus dieser Quelle erlauben“ einschalten und dann nochmal starten");
+                    return;
+                }
+                AppUpdater.install(MainActivity.this, url, new AppUpdater.Listener() { @Override public void status(String m) { reportUpdate(m); } });
+            } });
+        }
         @JavascriptInterface public void setAdminOpen(final boolean on) {
             adminOpen = on;
             ui.post(new Runnable() { @Override public void run() {

@@ -207,7 +207,7 @@ $('sayBtn').onclick = () => { const t = [$('mTitle').value.trim(), $('mText').va
   ['Startseite', '', { cmd: 'view', name: 'home' }], ['Nachtmodus', '', { cmd: 'view', name: 'night' }], ['Bildschirmschoner', '', { cmd: 'view', name: 'night2' }],
   ['Radio aus', '', { cmd: 'radioOff' }], ['Ton: Alarm', '', { cmd: 'sound', name: 'alarm' }], ['Ton: Ruf', '', { cmd: 'sound', name: 'ruf' }],
   ['Luigi an', '', { cmd: 'luigi', on: true }], ['Luigi aus', '', { cmd: 'luigi', on: false }], ['Systemverwaltung', 'öffnen', { cmd: 'admin', on: true }],
-  ['Systemverwaltung', 'schließen', { cmd: 'admin', on: false }], ['Neu laden', '', { cmd: 'reload' }], ['Update suchen', '', { cmd: 'update' }],
+  ['Systemverwaltung', 'schließen', { cmd: 'admin', on: false }], ['Neu laden', '', { cmd: 'reload' }], ['Update suchen', '', { cmd: 'update' }], ['Tablet-App', 'aktualisieren', { cmd: 'appUpdate' }],
 ].forEach(([l, s, c]) => { const b = document.createElement('button'); b.className = 'tile'; b.innerHTML = esc(l) + (s ? '<small>' + esc(s) + '</small>' : ''); b.onclick = () => send(c, l + (s ? ' ' + s : '')); $('acts').appendChild(b); });
 let bT = 0; $('bright').addEventListener('input', () => { clearTimeout(bT); bT = setTimeout(() => send({ cmd: 'bright', value: $('bright').value / 100 }, 'Helligkeit ' + $('bright').value + ' %'), 300); });
 
