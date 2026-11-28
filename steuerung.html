@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bastelraum · Steuerung</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html{background:#0E0F12}
+body{margin:0;font-family:Outfit,system-ui,sans-serif;color:#E6E7EA;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1320px;margin:0 auto;padding:30px 34px 60px}
+header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:26px}
+h1{margin:0;font-size:28px;font-weight:600;color:#fff}
+.sub{font-size:14px;color:rgba(255,255,255,.45);margin-top:4px}
+.stat{display:flex;align-items:center;gap:10px;font-size:14px;color:rgba(255,255,255,.6)}
+.dot{width:9px;height:9px;border-radius:50%;background:#555}
+.dot.ok{background:#7CE38B;box-shadow:0 0 10px #7CE38B88}.dot.bad{background:#FF8A80}
+.grid{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:18px;align-items:start}
+.card{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:20px}
+.card h2{margin:0 0 4px;font-size:17px;font-weight:600;color:#fff}
+.card .hint{font-size:13px;color:rgba(255,255,255,.42);margin-bottom:16px}
+.lbl{font-size:12.5px;color:rgba(255,255,255,.45);margin:14px 0 7px}
+.field{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 13px;outline:none;font-size:15px}
+.field:focus{border-color:rgba(255,255,255,.35)}
+textarea.field{resize:vertical;min-height:70px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer;color:rgba(255,255,255,.75);transition:all .15s}
+.chip:hover{border-color:rgba(255,255,255,.3)}
+.chip.on{background:#fff;color:#111;border-color:#fff}
+.row{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:12px;padding:13px;font-size:15px;font-weight:500;cursor:pointer;transition:background .15s,transform .1s}
+.btn:hover{background:rgba(255,255,255,.12)}.btn:active{transform:scale(.98)}
+.btn.main{background:#fff;color:#111;border-color:#fff}.btn.main:hover{background:#e8e8e8}
+.btn.warn{color:#FF9A8F}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);border-radius:12px;padding:13px 10px;font-size:14px;cursor:pointer;text-align:center;transition:all .15s}
+.tile:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.2)}
+.tile small{display:block;font-size:11.5px;color:rgba(255,255,255,.4);margin-top:3px}
+.preview{margin-top:16px;aspect-ratio:16/10;border-radius:12px;background:#0B0C0F;border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;text-align:center;padding:0 30px;position:relative;overflow:hidden}
+.preview svg{width:30px;height:30px}
+.preview b{font-size:17px;color:#fff}.preview span{font-size:12px;color:rgba(255,255,255,.5)}.preview em{font-style:normal;font-size:11px;color:rgba(255,255,255,.7)}
+.preview .pl{position:absolute;top:9px;left:12px;font-size:10.5px;color:rgba(255,255,255,.3)}
+.log{font-size:13px;line-height:1.75;color:rgba(255,255,255,.6);max-height:260px;overflow:auto;font-variant-numeric:tabular-nums}
+.log .ok{color:#fff}.log .e{color:#FF8A80}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px}
+.kv span:nth-child(odd){color:rgba(255,255,255,.45)}
+.pair{max-width:420px;margin:12vh auto 0}
+.hidden{display:none!important}
+.range{width:100%;accent-color:#fff}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section id="vPair" class="pair hidden">
+  <div class="card">
+    <h2>Steuerung verbinden</h2>
+    <div class="hint">Code vom Tablet eingeben (Zahnrad → „Handy verbinden“).</div>
+    <input id="pairIn" class="field" placeholder="Code vom Tablet" autocomplete="off">
+    <div class="row"><button id="pairBtn" class="btn main">Verbinden</button></div>
+  </div>
+</section>
+
+<section id="vMain" class="hidden">
+  <header>
+    <div><h1>Bastelraum · Steuerung</h1><div class="sub">Fernsteuerung für das Tablet im Bastelraum</div></div>
+    <div class="stat"><span id="dot" class="dot"></span><span id="statTxt">Prüfe Verbindung …</span></div>
+  </header>
+
+  <div class="grid">
+    <!-- Sperren -->
+    <div class="card">
+      <h2>Sperren</h2>
+      <div class="hint">Sperrbildschirm wählen, Text anpassen und Dauer festlegen.</div>
+      <div class="chips" id="lockStyles"></div>
+      <div class="lbl">Überschrift (leer = Standard)</div>
+      <input id="lkTitle" class="field" placeholder="">
+      <div class="lbl">Text (leer = Standard)</div>
+      <input id="lkText" class="field" placeholder="">
+      <div class="lbl">Dauer</div>
+      <div class="chips" id="lockDur"></div>
+      <div class="lbl">Absender unten (optional)</div>
+      <input id="lkFrom" class="field" placeholder="z. B. Gesperrt durch die Systemverwaltung">
+      <div class="preview" id="prev"></div>
+      <div class="row"><button id="lockBtn" class="btn main">Tablet sperren</button><button id="unlockBtn" class="btn">Entsperren</button></div>
+    </div>
+
+    <!-- Nachrichten & Animationen -->
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="card">
+        <h2>Nachricht</h2>
+        <div class="hint">Als kleine Karte oder groß über den ganzen Bildschirm.</div>
+        <input id="mTitle" class="field" placeholder="Nachricht oder Überschrift">
+        <div class="lbl">Zusatztext (nur Vollbild)</div>
+        <textarea id="mText" class="field" placeholder=""></textarea>
+        <div class="lbl">Vollbild ausblenden nach</div>
+        <div class="chips" id="popDur"></div>
+        <div class="row"><button id="msgBtn" class="btn">Als Karte</button><button id="popBtn" class="btn main">Vollbild</button></div>
+        <div class="row" style="margin-top:10px"><button id="sayBtn" class="btn">Von Luigi vorlesen lassen</button></div>
+      </div>
+      <div class="card">
+        <h2>Animationen</h2>
+        <div class="hint">Wird sofort auf dem Tablet abgespielt.</div>
+        <div class="tiles" id="anims"></div>
+      </div>
+    </div>
+
+    <!-- Tablet -->
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="card">
+        <h2>Tablet</h2>
+        <div class="hint">Ansicht, Töne und Funktionen.</div>
+        <div class="tiles" id="acts"></div>
+        <div class="lbl">Helligkeit</div>
+        <input id="bright" class="range" type="range" min="5" max="100" value="80">
+      </div>
+      <div class="card">
+        <h2>Status</h2>
+        <div class="kv" id="kv"><span>Tablet</span><span>–</span></div>
+        <div class="lbl">Verlauf</div>
+        <div class="log" id="log"></div>
+        <div class="row"><button id="pingBtn" class="btn">Status abfragen</button><button id="unpairBtn" class="btn warn">Trennen</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<script>
+{
+const NTFY = 'https://ntfy.sh/';
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = { get: (k, d) => { try { const v = localStorage.getItem('bastelCtl_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem('bastelCtl_' + k, JSON.stringify(v)); } catch (e) {} } };
+let key = store.get('key', null), es = null, lastSeen = 0;
+const tTablet = () => 'bastelraum-' + key.toLowerCase() + '-tablet';
+const tStatus = () => 'bastelraum-' + key.toLowerCase() + '-status';
+const hhmmss = (d) => [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
+function log(t, c) { const r = document.createElement('div'); if (c) r.className = c; r.textContent = hhmmss(new Date()) + '  ' + t; $('log').prepend(r); while ($('log').children.length > 60) $('log').lastChild.remove(); }
+
+async function send(cmd, label) {
+  try {
+    const r = await fetch(NTFY + tTablet(), { method: 'POST', body: JSON.stringify(cmd), headers: { Title: 'Steuerung' } });
+    if (!r.ok) throw 0; log('→ ' + (label || cmd.cmd));
+  } catch (e) { log('Senden fehlgeschlagen', 'e'); }
+}
+
+/* ---------- Sperren ---------- */
+const ICONS = {
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  wrench: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  cup: '<path d="M4 8h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 2v3M12 2v3"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M12 8v5M12 16h.01"/>',
+  moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  sync: '<path d="M21 12a9 9 0 0 1-15.5 6.3M3 12A9 9 0 0 1 18.5 5.7"/><path d="M21 4v5h-5M3 20v-5h5"/>',
+  ban: '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+};
+const STYLES = [
+  ['standard', 'Gesperrt', 'lock', 'App vorübergehend gesperrt', 'Bitte fragen Sie einen Systemadministrator.'],
+  ['wartung', 'Wartung', 'wrench', 'Wartungsarbeiten', 'Das System wird gerade gewartet. Bitte später erneut versuchen.'],
+  ['update', 'Update', 'sync', 'Update wird installiert', 'Bitte das Tablet nicht ausschalten.'],
+  ['zeit', 'Zeitsperre', 'clock', 'Zeitsperre aktiv', 'Die Bedienung ist bald wieder möglich.'],
+  ['pause', 'Pause', 'cup', 'Pause', 'Zeit für eine kleine Pause.'],
+  ['sicherheit', 'Sicherheit', 'shield', 'Sicherheitssperre', 'Ungewöhnliche Aktivität erkannt. Das Gerät wurde vorsorglich gesperrt.'],
+  ['feierabend', 'Feierabend', 'moon', 'Feierabend', 'Der Bastelraum hat für heute geschlossen.'],
+  ['gesperrt', 'Zugriff verweigert', 'ban', 'Zugriff verweigert', 'Dieses Gerät wurde von der Verwaltung gesperrt.'],
+  ['ueberwacht', 'Fernprüfung', 'eye', 'Gerät wird überprüft', 'Eine Fernprüfung läuft. Bitte nichts antippen.'],
+];
+const DURS = [['Bis ich entsperre', 0], ['1 Min', 1], ['5 Min', 5], ['15 Min', 15], ['30 Min', 30], ['1 Std', 60], ['3 Std', 180]];
+let style = 'standard', dur = 0, popSecs = 0;
+function chips(box, items, cur, set) {
+  box.innerHTML = '';
+  items.forEach(([lab, val]) => { const b = document.createElement('button'); b.className = 'chip' + (val === cur() ? ' on' : ''); b.textContent = lab; b.onclick = () => { set(val); chips(box, items, cur, set); preview(); }; box.appendChild(b); });
+}
+function preview() {
+  const s = STYLES.find((x) => x[0] === style);
+  $('lkTitle').placeholder = s[3]; $('lkText').placeholder = s[4];
+  $('prev').innerHTML = '<span class="pl">Vorschau</span><svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + ICONS[s[2]] + '</svg><b>' + esc($('lkTitle').value || s[3]) + '</b><span>' + esc($('lkText').value || s[4]) + '</span>'
+    + (dur ? '<em>Entsperrt in ' + (dur >= 60 ? dur / 60 + ' h' : dur + ':00') + '</em>' : '') + (style === 'update' ? '<em>37 %</em>' : '');
+}
+chips($('lockStyles'), STYLES.map((s) => [s[1], s[0]]), () => style, (v) => { style = v; });
+chips($('lockDur'), DURS, () => dur, (v) => { dur = v; });
+chips($('popDur'), [['Bis angetippt', 0], ['10 s', 10], ['30 s', 30], ['1 Min', 60]], () => popSecs, (v) => { popSecs = v; });
+['lkTitle', 'lkText'].forEach((id) => $(id).addEventListener('input', preview));
+$('lockBtn').onclick = () => send({ cmd: 'lock', style, title: $('lkTitle').value.trim(), text: $('lkText').value.trim(), minutes: dur, from: $('lkFrom').value.trim() }, 'Sperren (' + STYLES.find((x) => x[0] === style)[1] + ')');
+$('unlockBtn').onclick = () => send({ cmd: 'unlock' }, 'Entsperren');
+
+/* ---------- Nachricht ---------- */
+$('msgBtn').onclick = () => { const t = $('mTitle').value.trim(); if (!t) return; send({ cmd: 'msg', text: t }, 'Karte: ' + t); };
+$('popBtn').onclick = () => { const t = $('mTitle').value.trim(); if (!t) return; send({ cmd: 'popup', title: t, text: $('mText').value.trim(), seconds: popSecs }, 'Vollbild: ' + t); };
+$('sayBtn').onclick = () => { const t = [$('mTitle').value.trim(), $('mText').value.trim()].filter(Boolean).join('. '); if (!t) return; send({ cmd: 'say', text: t }, 'Vorlesen'); };
+
+/* ---------- Animationen ---------- */
+[['konfetti', 'Konfetti'], ['feuerwerk', 'Feuerwerk'], ['herzen', 'Herzen'], ['schnee', 'Schnee'], ['sterne', 'Sternenhimmel'], ['regenbogen', 'Regenbogen'], ['puls', 'Lichtpuls'], ['glitch', 'Glitch'], ['wackeln', 'Wackeln'], ['blackout', 'Blackout'], ['scan', 'Systemscan'], ['neustart', 'Fake-Neustart'], ['update', 'Fake-Update'], ['deaktiviert', 'Luigi deaktiviert']].forEach(([n, l]) => {
+  const b = document.createElement('button'); b.className = 'tile'; b.textContent = l; b.onclick = () => send({ cmd: 'anim', name: n }, 'Animation: ' + l); $('anims').appendChild(b);
+});
+
+/* ---------- Tablet ---------- */
+[
+  ['Startseite', '', { cmd: 'view', name: 'home' }], ['Nachtmodus', '', { cmd: 'view', name: 'night' }], ['Bildschirmschoner', '', { cmd: 'view', name: 'night2' }],
+  ['Radio aus', '', { cmd: 'radioOff' }], ['Ton: Alarm', '', { cmd: 'sound', name: 'alarm' }], ['Ton: Ruf', '', { cmd: 'sound', name: 'ruf' }],
+  ['Luigi an', '', { cmd: 'luigi', on: true }], ['Luigi aus', '', { cmd: 'luigi', on: false }], ['Systemverwaltung', 'öffnen', { cmd: 'admin', on: true }],
+  ['Systemverwaltung', 'schließen', { cmd: 'admin', on: false }], ['Neu laden', '', { cmd: 'reload' }], ['Update suchen', '', { cmd: 'update' }],
+].forEach(([l, s, c]) => { const b = document.createElement('button'); b.className = 'tile'; b.innerHTML = esc(l) + (s ? '<small>' + esc(s) + '</small>' : ''); b.onclick = () => send(c, l + (s ? ' ' + s : '')); $('acts').appendChild(b); });
+let bT = 0; $('bright').addEventListener('input', () => { clearTimeout(bT); bT = setTimeout(() => send({ cmd: 'bright', value: $('bright').value / 100 }, 'Helligkeit ' + $('bright').value + ' %'), 300); });
+
+/* ---------- Status ---------- */
+const VIEWS = { home: 'Startseite', night: 'Nachtmodus', night2: 'Bildschirmschoner' };
+function showState(st) {
+  lastSeen = Date.now();
+  const lk = st.locked ? (STYLES.find((x) => x[0] === (st.lock && st.lock.style)) || STYLES[0])[1] : 'nein';
+  $('kv').innerHTML = [['Dashboard', st.v], ['Tablet-App', st.app || '–'], ['Gesperrt', lk], ['Ansicht', VIEWS[st.view] || st.view || '–'], ['Luigi', st.luigi ? 'an' : 'aus'], ['Radio', st.radio ? 'läuft' : 'aus'], ['KI', st.ai ? 'eingerichtet' : 'fehlt']].map(([a, b]) => '<span>' + esc(a) + '</span><span>' + esc(b) + '</span>').join('');
+  paintDot();
+}
+function paintDot() {
+  const ok = Date.now() - lastSeen < 90000;
+  $('dot').className = 'dot' + (lastSeen ? (ok ? ' ok' : ' bad') : '');
+  $('statTxt').textContent = !lastSeen ? 'Warte auf Tablet …' : ok ? 'Tablet erreichbar' : 'Tablet antwortet nicht';
+}
+function listen() {
+  if (es) es.close();
+  es = new EventSource(NTFY + tStatus() + '/sse');
+  es.onmessage = (e) => { try { const m = JSON.parse(e.data); if (m.event !== 'message') return; const j = JSON.parse(m.message); if (j.info) log('← ' + j.info, 'ok'); if (j.state) showState(j.state); } catch (x) {} };
+  es.onerror = () => { if (es.readyState === 2) setTimeout(listen, 4000); };
+}
+$('pingBtn').onclick = () => send({ cmd: 'ping' }, 'Status abfragen');
+$('unpairBtn').onclick = () => { store.set('key', null); location.reload(); };
+setInterval(paintDot, 5000);
+
+/* ---------- Verbinden ---------- */
+function start() { $('vPair').classList.add('hidden'); $('vMain').classList.remove('hidden'); preview(); listen(); setTimeout(() => send({ cmd: 'ping' }, 'Status abfragen'), 400); }
+$('pairBtn').onclick = () => { const k = $('pairIn').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''); if (k.length < 8) return; key = k; store.set('key', k); start(); };
+$('pairIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('pairBtn').click(); });
+const fromLink = (location.hash.match(/k=([A-Za-z0-9]+)/) || [])[1];
+if (fromLink) { key = fromLink.toUpperCase(); store.set('key', key); history.replaceState(null, '', location.pathname); }
+if (key) start(); else $('vPair').classList.remove('hidden');
+}
+</script>
+</body>
+</html>

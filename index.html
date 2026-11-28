@@ -16,7 +16,25 @@ html,body{margin:0;height:100%;background:#07080C;overflow:hidden;-webkit-tap-hi
 body{font-family:Outfit,system-ui,sans-serif;color:#fff}
 button,input{font-family:inherit;color:#fff}
 button{cursor:pointer}
-#appLock{position:absolute;inset:0;z-index:940;background:#0E0F12;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;text-align:center}#appLock b{font-size:30px;font-weight:600;margin-top:8px}#appLock span{font-size:18px;color:rgba(255,255,255,.55)}#appLock.hidden{display:none}
+#appLock{position:absolute;inset:0;z-index:940;background:#0E0F12;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;text-align:center;padding:0 160px}
+#appLock b{font-size:32px;font-weight:600;margin-top:10px}#appLock span{font-size:19px;color:rgba(255,255,255,.55);max-width:720px;line-height:1.45}
+#appLock em{font-style:normal;font-size:17px;color:rgba(255,255,255,.75);font-variant-numeric:tabular-nums;margin-top:6px}
+#appLock small{position:absolute;bottom:34px;font-size:13px;color:rgba(255,255,255,.3)}
+#appLock .lBar{width:260px;height:3px;border-radius:2px;margin-top:10px;background:linear-gradient(90deg,rgba(255,255,255,.08) 0 30%,rgba(255,255,255,.7) 30% 60%,rgba(255,255,255,.08) 60%);background-size:200% 100%;animation:aLd 1.4s linear infinite}
+#appLock .spin{animation:rSpin 2.4s linear infinite}@keyframes rSpin{to{transform:rotate(360deg)}}
+#appLock.hidden{display:none}
+.rPop{position:absolute;inset:0;z-index:960;background:rgba(8,9,12,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:0 140px;opacity:0;transition:opacity .35s}
+.rPop.on{opacity:1}.rPop .rFrom{font-size:15px;color:#FFC56B;letter-spacing:.5px}.rPop b{font-size:46px;font-weight:600;line-height:1.15}.rPop p{font-size:22px;color:rgba(255,255,255,.7);margin:0;line-height:1.45;max-width:900px}.rPop .rHint{position:absolute;bottom:34px;font-size:13px;color:rgba(255,255,255,.3)}
+.rFx{position:absolute;inset:0;z-index:955;pointer-events:none;transition:opacity .5s}
+.rOv{position:absolute;inset:0;z-index:955;transition:opacity .45s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.rBlack{background:#000;animation:rFlick .5s steps(2) 1}@keyframes rFlick{0%{opacity:0}50%{opacity:1}75%{opacity:.3}100%{opacity:1}}
+.rScan{pointer-events:none;background:rgba(5,6,10,.35)}.rScan i{position:absolute;left:0;right:0;height:3px;background:rgba(255,255,255,.85);box-shadow:0 0 30px rgba(255,255,255,.6);animation:rScanL 1.6s ease-in-out infinite alternate}.rScan span{font-size:22px;color:#fff;background:rgba(0,0,0,.55);padding:10px 22px;border-radius:999px}
+@keyframes rScanL{from{top:0}to{top:797px}}
+.rBoot{background:#000;color:#fff}.rBoot b{font-size:30px;font-weight:600}.rBoot i{width:40px;height:40px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:#fff;animation:rSpin .9s linear infinite}.rBoot span{font-size:16px;color:rgba(255,255,255,.5)}
+.rRainbow{pointer-events:none;background:linear-gradient(120deg,#ff8a8055,#ffc56b55,#b8f28b55,#8bd3ff55,#e2b8ff55);background-size:300% 300%;animation:rRb 1.5s linear infinite;mix-blend-mode:screen}@keyframes rRb{to{background-position:300% 0}}
+.rPulse{pointer-events:none;box-shadow:inset 0 0 0 0 rgba(255,255,255,0);animation:rPu .8s ease-in-out 3}@keyframes rPu{50%{box-shadow:inset 0 0 120px 20px rgba(255,255,255,.35)}}
+#stage.rShake{animation:rSh .9s}@keyframes rSh{10%,30%,50%,70%,90%{translate:-12px 0}20%,40%,60%,80%{translate:12px 0}}
+#stage.rGlitch{animation:rGl 1.6s steps(1)}@keyframes rGl{0%{filter:none}10%{filter:hue-rotate(90deg) contrast(1.6);translate:6px 0}20%{filter:invert(1);translate:-8px 2px}30%{filter:none;translate:0}45%{filter:saturate(4) hue-rotate(200deg);translate:10px -3px}55%{filter:none;translate:0}70%{filter:invert(1) contrast(2)}80%{filter:none}90%{filter:hue-rotate(300deg);translate:-5px 0}100%{filter:none;translate:0}}
 #adm{position:absolute;inset:0;z-index:950;background:#0E0F12;color:#E6E7EA;font-family:Outfit,system-ui,sans-serif;transition:opacity .25s;overflow:hidden}
 #adm.out{opacity:0}
 #adm .aBoot{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:3;background:#0E0F12;font-size:15px;color:rgba(255,255,255,.55)}
@@ -698,6 +716,7 @@ let lastMsgId = store.get('lastMsgId', null), lastHeard = 0;
 function handleIncoming(m) {
   if (!m || m.event !== 'message' || !m.message || seenMsg.has(m.id)) return;
   seenMsg.add(m.id); lastMsgId = m.id; store.set('lastMsgId', m.id); lastHeard = Date.now();
+  if (m.title === 'Steuerung') { try { window.remoteCmd && remoteCmd(JSON.parse(m.message)); } catch (x) {} return; }
   if (m.title === 'KI-Schluessel') { setAiKey(m.message === '-' ? '' : m.message); sendToOdin(m.message === '-' ? 'KI-Schlüssel am Tablet entfernt' : 'KI-Schlüssel ist am Tablet angekommen ✓', { title: 'Bastelraum', priority: 3, tags: 'white_check_mark' }); return; }
   if (m.title === 'Test') { sendToOdin('Das Tablet hat deinen Test bekommen ✓', { title: 'Bastelraum', priority: 3, tags: 'white_check_mark' }); say('Test vom Handy angekommen ✓'); return; }
   receiveMessage(m.message);
@@ -1681,7 +1700,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.4.2';
+const APP_VERSION = '2.5.0';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -2105,17 +2124,151 @@ renderMsg(); renderRadio(); renderMats(); show('home');
   if (hm) { let taps = []; hm.addEventListener('pointerdown', () => { const n = Date.now(); taps = taps.filter((t) => n - t < 1800); taps.push(n); if (taps.length >= 5) { taps = []; window.openAdmin(); } }); }
 })();
 
-/* ---------- App-Sperre ---------- */
+/* ---------- App-Sperre (mehrere Arten, auch per Fernsteuerung) ---------- */
+const LOCK_ICONS = {
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  wrench: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  cup: '<path d="M4 8h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 2v3M12 2v3"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M12 8v5M12 16h.01"/>',
+  moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  sync: '<path d="M21 12a9 9 0 0 1-15.5 6.3M3 12A9 9 0 0 1 18.5 5.7"/><path d="M21 4v5h-5M3 20v-5h5"/>',
+  ban: '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+};
+const LOCK_STYLES = {
+  standard: { icon: 'lock', title: 'App vorübergehend gesperrt', text: 'Bitte fragen Sie einen Systemadministrator.' },
+  wartung: { icon: 'wrench', title: 'Wartungsarbeiten', text: 'Das System wird gerade gewartet. Bitte später erneut versuchen.', bar: true },
+  update: { icon: 'sync', title: 'Update wird installiert', text: 'Bitte das Tablet nicht ausschalten.', pct: true, spin: true },
+  zeit: { icon: 'clock', title: 'Zeitsperre aktiv', text: 'Die Bedienung ist bald wieder möglich.' },
+  pause: { icon: 'cup', title: 'Pause', text: 'Zeit für eine kleine Pause.' },
+  sicherheit: { icon: 'shield', title: 'Sicherheitssperre', text: 'Ungewöhnliche Aktivität erkannt. Das Gerät wurde vorsorglich gesperrt.' },
+  feierabend: { icon: 'moon', title: 'Feierabend', text: 'Der Bastelraum hat für heute geschlossen.' },
+  gesperrt: { icon: 'ban', title: 'Zugriff verweigert', text: 'Dieses Gerät wurde von der Verwaltung gesperrt.' },
+  ueberwacht: { icon: 'eye', title: 'Gerät wird überprüft', text: 'Eine Fernprüfung läuft. Bitte nichts antippen.', bar: true },
+};
 const lockEl = document.createElement('div'); lockEl.id = 'appLock'; lockEl.className = 'hidden';
-lockEl.innerHTML = '<svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><b>App vorübergehend gesperrt</b><span>Bitte fragen Sie einen Systemadministrator.</span>';
 $('stage').appendChild(lockEl);
-function lockApp(on) {
-  store.set('appLocked', !!on); lockEl.classList.toggle('hidden', !on);
+let lockTick = 0;
+function renderLock() {
+  const o = store.get('lockOpts', {}) || {};
+  const st = LOCK_STYLES[o.style] || LOCK_STYLES.standard;
+  const until = o.until || 0;
+  lockEl.innerHTML = '<svg class="lIc' + (st.spin ? ' spin' : '') + '" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + LOCK_ICONS[st.icon] + '</svg>'
+    + '<b>' + esc(o.title || st.title) + '</b><span>' + esc(o.text || st.text) + '</span>'
+    + (st.bar ? '<i class="lBar"></i>' : '') + (st.pct ? '<em class="lPct">0 %</em>' : '') + (until ? '<em class="lCd"></em>' : '')
+    + (o.from ? '<small>' + esc(o.from) + '</small>' : '');
+  const ic = lockEl.querySelector('.lIc'); let lp = 0;
+  ic.addEventListener('pointerdown', () => { clearTimeout(lp); lp = setTimeout(() => { window.openAdmin && openAdmin(); }, 3000); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => ic.addEventListener(ev, () => clearTimeout(lp)));
+  clearInterval(lockTick);
+  let pct = o.pctStart || 0;
+  lockTick = setInterval(() => {
+    const cd = lockEl.querySelector('.lCd');
+    if (until) {
+      const left = until - Date.now();
+      if (left <= 0) { lockApp(false); return; }
+      const m = Math.floor(left / 60000), s2 = Math.floor(left / 1000) % 60;
+      if (cd) cd.textContent = 'Entsperrt in ' + (m >= 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : m + ':' + String(s2).padStart(2, '0'));
+    }
+    const pe = lockEl.querySelector('.lPct');
+    if (pe) { pct = Math.min(99, pct + Math.random() * (pct < 80 ? .6 : .12)); pe.textContent = Math.floor(pct) + ' %'; o.pctStart = pct; }
+    lastTouch = Date.now();
+  }, 1000);
+}
+function lockApp(on, opts) {
+  if (on && opts) store.set('lockOpts', opts);
+  if (on && !opts && !store.get('appLocked', false)) store.set('lockOpts', {});
+  store.set('appLocked', !!on);
+  if (on) { renderLock(); try { if (view.startsWith('night')) show('home'); } catch (e) {} } else clearInterval(lockTick);
+  lockEl.classList.toggle('hidden', !on);
   try { if (on && L.open) luigiClose(); } catch (e) {}
 }
 if (store.get('appLocked', false)) lockApp(true);
-{ let lp = 0; const ic = lockEl.querySelector('svg'); ic.addEventListener('pointerdown', () => { clearTimeout(lp); lp = setTimeout(() => { window.openAdmin && openAdmin(); }, 3000); }); ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => ic.addEventListener(ev, () => clearTimeout(lp))); }
 { let t = []; lockEl.addEventListener('pointerdown', (e) => { if (e.clientY > 120 || e.clientX < window.innerWidth - 160) { t = []; return; } const n = Date.now(); t = t.filter((x) => n - x < 2500); t.push(n); if (t.length >= 7) { t = []; window.openAdmin && openAdmin(); } }); }
+
+/* ---------- Vollbild-Nachricht ---------- */
+function popup(title, text, secs) {
+  const o = document.createElement('div'); o.className = 'rPop';
+  o.innerHTML = '<span class="rFrom">Nachricht von Odin</span><b>' + esc(title || '') + '</b>' + (text ? '<p>' + esc(text) + '</p>' : '') + '<span class="rHint">Zum Schließen tippen</span>';
+  $('stage').appendChild(o); try { sndMsg(); } catch (e) {}
+  requestAnimationFrame(() => o.classList.add('on'));
+  const end = () => { o.classList.remove('on'); setTimeout(() => o.remove(), 400); };
+  o.onclick = end; if (secs > 0) setTimeout(end, secs * 1000);
+  if (view.startsWith('night')) show('home');
+}
+
+/* ---------- Animationen ---------- */
+function fxCanvas(dur, draw) {
+  const c = document.createElement('canvas'); c.className = 'rFx'; c.width = 1280; c.height = 800;
+  $('stage').appendChild(c); const cx = c.getContext('2d'); const t0 = performance.now();
+  const loop = (t) => { const k = (t - t0) / dur; cx.clearRect(0, 0, 1280, 800); draw(cx, (t - t0) / 1000, k); if (k < 1) requestAnimationFrame(loop); else { c.style.opacity = '0'; setTimeout(() => c.remove(), 500); } };
+  requestAnimationFrame(loop);
+}
+const rnd2 = (a, b) => a + Math.random() * (b - a);
+const FX = {
+  konfetti() {
+    const cols = ['#FFC56B', '#FF8A80', '#8BD3FF', '#B8F28B', '#E2B8FF', '#fff'];
+    const P = Array.from({ length: 160 }, () => ({ x: rnd2(0, 1280), y: rnd2(-800, -10), vx: rnd2(-40, 40), vy: rnd2(160, 320), r: rnd2(0, 6), vr: rnd2(-6, 6), w: rnd2(6, 12), h: rnd2(3, 6), c: cols[Math.floor(Math.random() * cols.length)] }));
+    let last = 0; fxCanvas(5000, (cx, t) => { const dt = t - last; last = t; P.forEach((p) => { p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.vr * dt; cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 2))); cx.restore(); }); });
+  },
+  herzen() {
+    const P = Array.from({ length: 40 }, () => ({ x: rnd2(60, 1220), y: rnd2(820, 1400), s: rnd2(14, 34), v: rnd2(90, 170), ph: rnd2(0, 6) }));
+    let last = 0; fxCanvas(6000, (cx, t) => { const dt = t - last; last = t; P.forEach((p) => { p.y -= p.v * dt; const x = p.x + Math.sin(t * 2 + p.ph) * 18; cx.fillStyle = 'rgba(255,110,130,.85)'; cx.font = p.s + 'px sans-serif'; cx.fillText('❤', x, p.y); }); });
+  },
+  schnee() {
+    const P = Array.from({ length: 180 }, () => ({ x: rnd2(0, 1280), y: rnd2(-800, 0), r: rnd2(1.5, 4), v: rnd2(40, 110), ph: rnd2(0, 6) }));
+    let last = 0; fxCanvas(8000, (cx, t, k) => { const dt = t - last; last = t; cx.fillStyle = 'rgba(255,255,255,' + (k > .85 ? (1 - k) / .15 : .9) + ')'; P.forEach((p) => { p.y += p.v * dt; if (p.y > 810) p.y = -10; cx.beginPath(); cx.arc(p.x + Math.sin(t + p.ph) * 14, p.y, p.r, 0, 7); cx.fill(); }); });
+  },
+  feuerwerk() {
+    const R = []; const cols = ['#FFC56B', '#FF8A80', '#8BD3FF', '#B8F28B', '#E2B8FF'];
+    for (let i = 0; i < 7; i++) { const x = rnd2(200, 1080), y = rnd2(140, 420), t0 = i * .6 + rnd2(0, .3), c = cols[i % cols.length]; for (let j = 0; j < 60; j++) { const a = j / 60 * Math.PI * 2, sp = rnd2(120, 260); R.push({ x, y, t0, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, c }); } }
+    fxCanvas(6500, (cx, t) => { R.forEach((p) => { const d = t - p.t0; if (d < 0 || d > 1.6) return; cx.globalAlpha = 1 - d / 1.6; cx.fillStyle = p.c; cx.beginPath(); cx.arc(p.x + p.vx * d, p.y + p.vy * d + 90 * d * d, 2.4, 0, 7); cx.fill(); }); cx.globalAlpha = 1; });
+  },
+  sterne() {
+    const P = Array.from({ length: 90 }, () => ({ x: rnd2(0, 1280), y: rnd2(0, 800), s: rnd2(1, 3), ph: rnd2(0, 6) }));
+    fxCanvas(6000, (cx, t, k) => { cx.fillStyle = 'rgba(5,6,12,' + Math.min(.85, Math.min(k, 1 - k) * 4) + ')'; cx.fillRect(0, 0, 1280, 800); P.forEach((p) => { cx.globalAlpha = (.5 + .5 * Math.sin(t * 3 + p.ph)) * Math.min(1, Math.min(k, 1 - k) * 4); cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(p.x, p.y, p.s, 0, 7); cx.fill(); }); cx.globalAlpha = 1; });
+  },
+  glitch() { const st = $('stage'); st.classList.add('rGlitch'); setTimeout(() => st.classList.remove('rGlitch'), 1600); },
+  wackeln() { const st = $('stage'); st.classList.add('rShake'); setTimeout(() => st.classList.remove('rShake'), 900); },
+  blackout() { cssOv('rBlack', 2600); },
+  scan() { const o = cssOv('rScan', 3400); o.innerHTML = '<i></i><span>Systemprüfung läuft …</span>'; },
+  neustart() { const o = cssOv('rBoot', 5200); o.innerHTML = '<b>Bastelraum OS</b><i></i><span>Wird neu gestartet …</span>'; },
+  update() { const o = cssOv('rBoot', 5200); o.innerHTML = '<b>Odin veröffentlicht jetzt ein Update</b><i></i><span>Bitte kurz warten …</span>'; },
+  deaktiviert() { try { luigiOff(); } catch (e) {} },
+  regenbogen() { cssOv('rRainbow', 3000); },
+  puls() { cssOv('rPulse', 2400); },
+};
+function cssOv(cls, ms) { const o = document.createElement('div'); o.className = 'rOv ' + cls; $('stage').appendChild(o); setTimeout(() => { o.style.opacity = '0'; setTimeout(() => o.remove(), 450); }, ms); return o; }
+
+/* ---------- Fernsteuerung (von Odins Steuer-Webseite) ---------- */
+const topicStatus = () => 'bastelraum-' + pairKey().toLowerCase() + '-status';
+function remoteState() { return { v: APP_VERSION, app: (window.BastelOS && BastelOS.version) ? BastelOS.version() : null, locked: store.get('appLocked', false), lock: store.get('lockOpts', {}), view, luigi: !luigiIsOff(), radio: !!playing, ai: !!store.get('aiKey', ''), at: Date.now() }; }
+function reportStatus(info) { try { fetch(NTFY + topicStatus(), { method: 'POST', body: JSON.stringify({ info: info || '', state: remoteState() }) }).catch(() => {}); } catch (e) {} }
+function remoteCmd(c) {
+  if (!c || !c.cmd) return;
+  let info = 'OK';
+  switch (c.cmd) {
+    case 'ping': info = 'Tablet antwortet'; break;
+    case 'lock': lockApp(true, { style: c.style || 'standard', title: c.title || '', text: c.text || '', until: c.minutes ? Date.now() + c.minutes * 60000 : 0, from: c.from || '' }); info = 'Gesperrt'; break;
+    case 'unlock': lockApp(false); info = 'Entsperrt'; break;
+    case 'msg': receiveMessage(c.text || ''); info = 'Nachricht angezeigt'; break;
+    case 'popup': popup(c.title, c.text, c.seconds || 0); info = 'Vollbild-Nachricht angezeigt'; break;
+    case 'anim': if (FX[c.name]) FX[c.name](); info = 'Animation: ' + c.name; break;
+    case 'say': try { speak(c.text || ''); } catch (e) {} info = 'Gesprochen'; break;
+    case 'sound': try { ({ alarm: sndAlarm, ruf: sndCall, nachricht: sndMsg, tipp: sndTap })[c.name](); } catch (e) {} info = 'Ton gespielt'; break;
+    case 'view': try { if (window.closeAdmin) closeAdmin(); show(c.name); } catch (e) {} info = 'Ansicht: ' + c.name; break;
+    case 'radioOff': try { stopRadio(); } catch (e) {} info = 'Radio aus'; break;
+    case 'bright': try { BastelOS.setBrightness(c.value); } catch (e) {} info = 'Helligkeit gesetzt'; break;
+    case 'luigi': store.set('luigiOff', !c.on); applyLuigiState(); info = 'Luigi ' + (c.on ? 'an' : 'aus'); break;
+    case 'admin': try { c.on ? openAdmin() : closeAdmin(); } catch (e) {} info = 'Systemverwaltung ' + (c.on ? 'offen' : 'zu'); break;
+    case 'reload': reportStatus('Lädt neu …'); setTimeout(() => location.reload(), 800); return;
+    case 'update': try { checkUpdate(); } catch (e) {} info = 'Suche nach Updates'; break;
+    default: info = 'Unbekannter Befehl';
+  }
+  reportStatus(info);
+}
+window.remoteCmd = remoteCmd;
 </script>
 </body>
 </html>
