@@ -1839,7 +1839,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.6.2';
+const APP_VERSION = '2.6.3';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -2148,7 +2148,7 @@ renderMsg(); renderRadio(); renderMats(); show('home');
   const el = document.createElement('div'); el.id = 'adm'; el.className = 'hidden';
   el.innerHTML = '<div class="aBoot"></div><div class="aUi"><div class="aTop"><div class="aBrand"><span class="aGlyph">◢◤</span><div><b>Systemverwaltung</b><i>Bastelraum OS · Wartung und Diagnose · nur für Administratoren</i></div></div><div class="aStat"><span id="aClock">--:--:--</span><span>Admin-Sitzung</span></div></div>'
     + '<div class="aBody"><nav class="aNav"></nav><main class="aMain"><div class="aHead"></div><div class="aGrid"></div></main><aside class="aSide"><div class="aGauges"></div><div class="aLogT">Ereignisse</div><div class="aLog"></div></aside></div>'
-    + '<div class="aFoot"><span>Lauter / Leiser: auswählen</span><span>Lauter halten: ausführen</span><span>Zurück: schließen</span><span class="aTouch"></span><span class="aHex"></span></div></div>';
+    + '<div class="aFoot"><span>Lauter / Leiser: auswählen</span><span>Lauter halten: ausführen</span><span>Leiser halten: nächster Bereich</span><span>Zurück: schließen</span><span class="aTouch"></span><span class="aHex"></span></div></div>';
   $('stage').appendChild(el);
   const nav = el.querySelector('.aNav'), grid = el.querySelector('.aGrid'), head = el.querySelector('.aHead'), logEl = el.querySelector('.aLog'), gauges = el.querySelector('.aGauges');
   CATS.forEach((c, i) => {
@@ -2210,11 +2210,12 @@ renderMsg(); renderRadio(); renderMats(); show('home');
 
   /* ---------- Bedienung mit Lautstärketasten ---------- */
   const flat = () => { const out = []; CATS.forEach((c, ci) => c.items.forEach((_, ii) => out.push([ci, ii]))); return out; };
-  document.addEventListener('keydown', (e) => { if (!A.open) return; const m = { ArrowUp: 'up', ArrowDown: 'down', Enter: 'ok', Escape: 'back' }[e.key]; if (m) { e.preventDefault(); window.onAdminKey(m); } });
+  document.addEventListener('keydown', (e) => { if (!A.open) return; const m = { ArrowUp: 'up', ArrowDown: 'down', Enter: 'ok', Escape: 'back', ArrowRight: 'nextcat' }[e.key]; if (m) { e.preventDefault(); window.onAdminKey(m); } });
   window.onAdminKey = (k) => {
     if (!A.open) return;
     if (k === 'back') { closeAdmin(); return; }
     if (k === 'ok') { run(A.sel); return; }
+    if (k === 'nextcat') { A.cat = (A.cat + 1) % CATS.length; A.sel = 0; render(); try { sndTap(); } catch (e) {} return; }
     const f = flat(); let p = f.findIndex((x) => x[0] === A.cat && x[1] === A.sel);
     p = (p + (k === 'down' ? 1 : f.length - 1)) % f.length;
     const catChanged = f[p][0] !== A.cat; A.cat = f[p][0]; A.sel = f[p][1];

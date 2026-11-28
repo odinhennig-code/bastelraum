@@ -50,7 +50,7 @@ public class MainActivity extends Activity {
     }
 
     private static final String URL = "https://odinhennig-code.github.io/bastelraum/";
-    private static final String VERSION = "2.1";
+    private static final String VERSION = "2.2";
 
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -74,6 +74,8 @@ public class MainActivity extends Activity {
     private volatile boolean adminOpen = false;
     private boolean adminLong = false;
     private final Runnable adminLongPress = new Runnable() { @Override public void run() { adminLong = true; adminKey("ok"); } };
+    private boolean adminDownLong = false;
+    private final Runnable adminDownLongPress = new Runnable() { @Override public void run() { adminDownLong = true; adminKey("nextcat"); } };
     private final TextView[] itemViews = new TextView[ITEMS.length];
     private TextView recLog;
     private int sel = 0;
@@ -292,7 +294,8 @@ public class MainActivity extends Activity {
                 return true;
             }
             if (code == KeyEvent.KEYCODE_VOLUME_DOWN) {
-                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) adminKey("down");
+                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) { adminDownLong = false; ui.postDelayed(adminDownLongPress, 700); }
+                else if (e.getAction() == KeyEvent.ACTION_UP) { ui.removeCallbacks(adminDownLongPress); if (!adminDownLong) adminKey("down"); }
                 return true;
             }
             if (code == KeyEvent.KEYCODE_BACK) { if (e.getAction() == KeyEvent.ACTION_UP) adminKey("back"); return true; }
