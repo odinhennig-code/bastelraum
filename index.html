@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#07080C">
 <title>Bastelraum</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ---------- Grundlagen ---------- */
 *{box-sizing:border-box}
@@ -16,58 +16,57 @@ html,body{margin:0;height:100%;background:#07080C;overflow:hidden;-webkit-tap-hi
 body{font-family:Outfit,system-ui,sans-serif;color:#fff}
 button,input{font-family:inherit;color:#fff}
 button{cursor:pointer}
-#adm{position:absolute;inset:0;z-index:950;background:#05070B;color:#D6E2EE;font-family:'JetBrains Mono',ui-monospace,monospace;--c:#FF8A3D;transition:opacity .3s;overflow:hidden}
+#adm{position:absolute;inset:0;z-index:950;background:#0E0F12;color:#E6E7EA;font-family:Outfit,system-ui,sans-serif;transition:opacity .25s;overflow:hidden}
 #adm.out{opacity:0}
-#adm::before{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px),radial-gradient(1200px 500px at 20% -10%,color-mix(in srgb,var(--c) 14%,transparent),transparent 70%);z-index:2}
-#adm .aBoot{position:absolute;inset:0;padding:60px 70px;font-size:16px;line-height:1.9;color:#7CFF8A;display:none;z-index:3;background:#05070B}
-#adm.booting .aBoot{display:block}
-#adm .aUi{position:absolute;inset:0;display:flex;flex-direction:column;padding:18px 22px 12px;gap:14px}
-#adm .aTop{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px}
-#adm .aBrand{display:flex;align-items:center;gap:14px}
-#adm .aGlyph{color:var(--c);font-size:26px;text-shadow:0 0 14px var(--c);transition:color .3s}
-#adm .aBrand b{display:block;font-size:17px;letter-spacing:3px;color:#fff}
-#adm .aBrand i{display:block;font-style:normal;font-size:11.5px;letter-spacing:1px;color:#6F8193;margin-top:3px}
-#adm .aStat{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:13px}
-#adm #aClock{font-size:22px;color:#fff;letter-spacing:2px}
-#adm .aRec{color:#FF4D5E;font-size:11px;letter-spacing:2px;animation:aBl 1.4s infinite}
-@keyframes aBl{50%{opacity:.35}}
-#adm .aBody{flex:1;display:grid;grid-template-columns:230px 1fr 260px;gap:16px;min-height:0}
-#adm .aNav{display:flex;flex-direction:column;gap:6px}
-#adm .aCat{all:unset;cursor:pointer;display:grid;grid-template-columns:44px 1fr auto;align-items:center;padding:12px 12px;border:1px solid rgba(255,255,255,.06);border-radius:8px;background:rgba(255,255,255,.02);font-size:13.5px;color:#9FB0C2;transition:all .2s}
-#adm .aCat .k{color:var(--c);font-weight:700;letter-spacing:1px;font-size:12px}
-#adm .aCat .cnt{font-size:11px;color:#56687A}
-#adm .aCat.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);color:#fff;box-shadow:inset 3px 0 0 var(--c)}
+#adm .aBoot{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:3;background:#0E0F12;font-size:15px;color:rgba(255,255,255,.55)}
+#adm .aBoot::after{content:'';width:220px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,.1) 0 30%,rgba(255,255,255,.7) 30% 60%,rgba(255,255,255,.1) 60%);background-size:200% 100%;animation:aLd 1s linear infinite}
+@keyframes aLd{from{background-position:100% 0}to{background-position:-100% 0}}
+#adm.booting .aBoot{display:flex}
+#adm .aUi{position:absolute;inset:0;display:flex;flex-direction:column;padding:26px 30px 16px;gap:20px}
+#adm .aTop{display:flex;align-items:flex-end;justify-content:space-between}
+#adm .aGlyph{display:none}
+#adm .aBrand b{display:block;font-size:26px;font-weight:600;color:#fff}
+#adm .aBrand i{display:block;font-style:normal;font-size:13px;color:rgba(255,255,255,.45);margin-top:4px}
+#adm .aStat{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-size:13px;color:rgba(255,255,255,.45)}
+#adm #aClock{font-size:20px;color:rgba(255,255,255,.85);font-variant-numeric:tabular-nums}
+#adm .aBody{flex:1;display:grid;grid-template-columns:240px 1fr 250px;gap:22px;min-height:0}
+#adm .aNav{display:flex;flex-direction:column;gap:2px}
+#adm .aCat{all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;font-size:15px;color:rgba(255,255,255,.7)}
+#adm .aCat .k{font-size:11px;font-weight:600;color:rgba(255,255,255,.35);width:30px;letter-spacing:.5px}
+#adm .aCat .n{flex:1}
+#adm .aCat .cnt{font-size:12px;color:rgba(255,255,255,.3)}
+#adm .aCat.on{background:rgba(255,255,255,.08);color:#fff}
 #adm .aMain{display:flex;flex-direction:column;gap:12px;min-height:0}
-#adm .aHead{font-size:20px;color:#fff;letter-spacing:1px;display:flex;align-items:baseline;gap:10px}
-#adm .aHead .k{color:var(--c)}
-#adm .aHead em{font-style:normal;font-size:12px;color:#5D6F81;margin-left:auto;letter-spacing:2px;text-transform:uppercase}
-#adm .aGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;overflow:auto;padding:2px 4px 4px 2px;align-content:start}
-#adm .aIt{all:unset;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:5px;padding:13px 14px 12px;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));transition:border-color .15s,background .15s,transform .15s;overflow:hidden}
-#adm .aIt .id{font-size:10.5px;color:#56687A;letter-spacing:2px}
-#adm .aIt b{font-size:15.5px;font-weight:600;color:#E8F0F8}
-#adm .aIt .d{font-size:12px;color:#7A8C9E}
-#adm .aIt .bar{height:3px;border-radius:2px;background:rgba(255,255,255,.06);margin-top:4px;overflow:hidden}
-#adm .aIt .bar u{display:block;height:100%;width:0;background:var(--c);box-shadow:0 0 10px var(--c);transition:width .4s}
-#adm .aIt .st{font-size:11px;letter-spacing:1px;color:var(--c);min-height:14px}
-#adm .aIt.sel{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,transparent);box-shadow:0 0 0 1px var(--c),0 0 24px color-mix(in srgb,var(--c) 25%,transparent)}
-#adm .aIt.sel::after{content:'▶';position:absolute;right:12px;top:12px;font-size:11px;color:var(--c)}
-#adm .aIt.warn .id::after{content:'  ⚠ KRITISCH';color:#FF4D5E}
-#adm .aIt.arm{border-color:#FF4D5E;box-shadow:0 0 0 1px #FF4D5E,0 0 24px rgba(255,77,94,.35);animation:aBl .7s infinite}
-#adm .aIt.arm .st{color:#FF4D5E}
-#adm .aIt.done .st{color:#7CFF8A}#adm .aIt.done .bar u{background:#7CFF8A;box-shadow:0 0 10px #7CFF8A}
-#adm .aIt.bad .st{color:#FF4D5E}#adm .aIt.bad .bar u{background:#FF4D5E;box-shadow:0 0 10px #FF4D5E}
-#adm .aSide{display:flex;flex-direction:column;gap:10px;min-height:0}
+#adm .aHead{font-size:19px;font-weight:600;color:#fff;display:flex;align-items:baseline;gap:8px}
+#adm .aHead .k{display:none}
+#adm .aHead em{font-style:normal;font-size:13px;font-weight:400;color:rgba(255,255,255,.35);margin-left:auto}
+#adm .aGrid{display:flex;flex-direction:column;overflow:auto;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);border-radius:14px}
+#adm .aIt{all:unset;cursor:pointer;position:relative;display:grid;grid-template-columns:70px 1fr auto;grid-template-rows:auto auto;column-gap:14px;row-gap:2px;padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.05)}
+#adm .aIt:last-child{border-bottom:0}
+#adm .aIt .id{grid-row:1/3;align-self:center;font-size:11px;color:rgba(255,255,255,.3);font-variant-numeric:tabular-nums}
+#adm .aIt b{font-size:15.5px;font-weight:500;color:#fff}
+#adm .aIt .d{grid-column:2;font-size:12.5px;color:rgba(255,255,255,.42)}
+#adm .aIt .st{grid-column:3;grid-row:1/3;align-self:center;font-size:12.5px;color:rgba(255,255,255,.5);text-align:right;max-width:230px}
+#adm .aIt .bar{position:absolute;left:0;bottom:0;right:0;height:2px;overflow:hidden}
+#adm .aIt .bar u{display:block;height:100%;width:0;background:rgba(255,255,255,.55);transition:width .4s}
+#adm .aIt.sel{background:rgba(255,255,255,.07)}
+#adm .aIt.sel::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:2px;background:#fff}
+#adm .aIt.warn .id::after{content:' · !';color:rgba(255,255,255,.5)}
+#adm .aIt.arm .st{color:#fff;font-weight:500}
+#adm .aIt.done .st{color:rgba(255,255,255,.8)}
+#adm .aIt.bad .st{color:#FF8A80}
+#adm .aSide{display:flex;flex-direction:column;gap:12px;min-height:0}
 #adm .aGauges{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-#adm .aG{padding:10px;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:4px}
-#adm .aG span{font-size:10.5px;letter-spacing:2px;color:#6F8193}
-#adm .aG b{font-size:19px;color:#fff;font-weight:500}
-#adm .aG i{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
-#adm .aG u{display:block;height:100%;background:var(--c);transition:width .8s}
-#adm .aLogT{font-size:10.5px;letter-spacing:3px;color:#56687A;margin-top:4px}
-#adm .aLog{flex:1;overflow:hidden;font-size:11.5px;line-height:1.6;color:#9FB0C2;border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px 10px;background:rgba(0,0,0,.35)}
-#adm .aLog .dim{color:#4A5B6C}#adm .aLog .ok{color:#7CFF8A}#adm .aLog .e{color:#FF4D5E}#adm .aLog .w{color:#FFD24D}
-#adm .aFoot{display:flex;gap:26px;font-size:10.5px;letter-spacing:2px;color:#4A5B6C;border-top:1px solid rgba(255,255,255,.06);padding-top:9px}
-#adm .aFoot .aHex{margin-left:auto;color:#5D6F81}
+#adm .aG{padding:12px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:6px}
+#adm .aG span{font-size:11px;color:rgba(255,255,255,.4)}
+#adm .aG b{font-size:18px;color:#fff;font-weight:500;font-variant-numeric:tabular-nums}
+#adm .aG i{height:2px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+#adm .aG u{display:block;height:100%;background:rgba(255,255,255,.5);transition:width .8s}
+#adm .aLogT{font-size:12px;color:rgba(255,255,255,.4);margin-top:4px}
+#adm .aLog{flex:1;overflow:hidden;font-size:12px;line-height:1.7;color:rgba(255,255,255,.6);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);font-variant-numeric:tabular-nums}
+#adm .aLog .dim{color:rgba(255,255,255,.28)}#adm .aLog .ok{color:rgba(255,255,255,.85)}#adm .aLog .e{color:#FF8A80}#adm .aLog .w{color:rgba(255,255,255,.85)}
+#adm .aFoot{display:flex;gap:24px;font-size:11.5px;color:rgba(255,255,255,.3)}
+#adm .aFoot .aHex{margin-left:auto}
 #adm.hidden{display:none}
 #lOff{position:absolute;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;background:rgba(5,6,10,0);transition:background .35s,opacity .4s;pointer-events:auto}
 #lOff.on{background:rgba(5,6,10,.88)}
@@ -1626,7 +1625,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.2.0';
+const APP_VERSION = '2.2.1';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
@@ -1818,50 +1817,50 @@ renderMsg(); renderRadio(); renderMats(); show('home');
     return 'E: Nur in der Tablet-App verfügbar';
   };
   const CATS = [
-    { k: 'SYS', n: 'Systemsteuerung', c: '#FF8A3D', items: [
-      ['Zurück zum Dashboard', 'Konsole schließen und Oberfläche freigeben', real(0), 'exit'],
-      ['Oberfläche neu initialisieren', 'Dashboard komplett neu laden', real(1)],
-      ['Update-Kanal abfragen', 'Nach neuer Version suchen', real(2)],
-      ['Android-Subsystem', 'Normale Android-Einstellungen öffnen', real(3), 'warn'],
+    { k: 'SYS', n: 'System', c: '#FF8A3D', items: [
+      ['Zurück zum Dashboard', 'Systemverwaltung schließen', real(0), 'exit'],
+      ['Oberfläche neu laden', 'Dashboard komplett neu laden', real(1)],
+      ['Nach Updates suchen', 'Nach neuer Version suchen', real(2)],
+      ['Android-Einstellungen', 'Normale Android-Einstellungen öffnen', real(3), 'warn'],
       ['Kiosk-Modus verlassen', 'App beenden, normales Android zeigen', real(4), 'warn'],
-      ['Display-Schlafbefehl', 'Bildschirm sofort ausschalten', real(5)],
-      ['Kaltstart einleiten', 'Tablet neu starten', real(6), 'warn'],
-      ['Low-Level-Recovery', 'Klassisches Notfallmenü öffnen', () => { closeAdmin(); if (window.BastelOS && BastelOS.openRecovery) BastelOS.openRecovery(); return ''; }, 'warn'],
+      ['Bildschirm ausschalten', 'Bildschirm sofort ausschalten', real(5)],
+      ['Neustart', 'Tablet neu starten', real(6), 'warn'],
+      ['Wiederherstellungsmodus', 'Notfallmenü auf Systemebene', () => { closeAdmin(); if (window.BastelOS && BastelOS.openRecovery) BastelOS.openRecovery(); return ''; }, 'warn'],
     ] },
-    { k: 'KRN', n: 'Kernel & Speicher', c: '#4FD1FF', items: [
-      ['Kernel-Matrix kalibrieren', 'Thread-Scheduler neu ausrichten', fake(['Lade Scheduler-Tabelle', 'Prüfe 4 Kerne', 'Richte Zeitscheiben aus', 'Matrix stabil'])],
-      ['Quantencache leeren', 'Zwischenspeicher-Sektoren freigeben', fake(['Scanne 0x0000–0xFFFF', 'Verwerfe 2.341 Blöcke', 'Cache kohärent'])],
+    { k: 'KRN', n: 'Leistung & Speicher', c: '#4FD1FF', items: [
+      ['Prozessplanung optimieren', 'Thread-Prioritäten neu berechnen', fake(['Lade Scheduler-Tabelle', 'Prüfe 4 Kerne', 'Richte Zeitscheiben aus', 'Abgeschlossen'])],
+      ['Systemcache bereinigen', 'Zwischenspeicher freigeben', fake(['Scanne 0x0000–0xFFFF', 'Verwerfe 2.341 Blöcke', 'Cache bereinigt'])],
       ['Speicherblöcke defragmentieren', 'Fragmentierung: 12,4 %', fake(['Analysiere Belegung', 'Verschiebe Segmente', 'Fragmentierung 0,0 %'])],
-      ['Thermische Drosselung', 'Profil: ausgewogen', fake(['Lese Sensoren T0–T3', 'Setze Lüfterkurve (virtuell)', 'Profil: leise'])],
-      ['Prozessorkerne synchronisieren', 'Taktdrift ausgleichen', fake(['Messe Drift', 'Gleiche 0,003 ms aus', 'Kerne synchron'])],
-      ['Interrupt-Vektoren prüfen', 'IRQ-Tabelle validieren', fake(['Lade IRQ 0–255', 'Prüfsummen ok', 'Keine Konflikte'])],
+      ['Thermisches Profil', 'Aktuell: ausgewogen', fake(['Lese Sensoren T0–T3', 'Setze Lüfterkurve (virtuell)', 'Profil: leise'])],
+      ['Kern-Taktung abgleichen', 'Taktdrift ausgleichen', fake(['Messe Drift', 'Gleiche 0,003 ms aus', 'Kerne synchron'])],
+      ['Interrupt-Tabelle prüfen', 'IRQ-Tabelle validieren', fake(['Lade IRQ 0–255', 'Prüfsummen ok', 'Keine Konflikte'])],
     ] },
-    { k: 'NET', n: 'Netz & Uplink', c: '#7CFF8A', items: [
-      ['Uplink zu Odin prüfen', 'Echte Verbindung zum Handy testen', uplink],
-      ['Firewall Ω aktivieren', 'Eingehende Pakete versiegeln', fake(['Lade Regelwerk Ω', '1.024 Regeln aktiv', 'Firewall Ω scharf'])],
-      ['Paket-Tunnel versiegeln', 'Ende-zu-Ende-Kanal härten', fake(['Handshake', 'Schlüsseltausch 4096 bit', 'Tunnel versiegelt'])],
-      ['Signal triangulieren', 'WLAN-Feldstärke vermessen', fake(['Sende Peilsignal', 'Empfange 3 Echos', 'Position fixiert'])],
-      ['DNS-Schild', 'Namensauflösung absichern', fake(['Prüfe Resolver', 'Schild aktiv'])],
-      ['Funkstille', 'Alle Sender drosseln (Simulation)', fake(['Drossle Sender', 'Funkstille hergestellt', 'Wieder freigegeben'])],
+    { k: 'NET', n: 'Netzwerk', c: '#7CFF8A', items: [
+      ['Verbindung zum Handy prüfen', 'Laufzeit zum Nachrichtendienst messen', uplink],
+      ['Paketfilter aktualisieren', 'Regeln für eingehende Verbindungen', fake(['Lade Regelwerk', '1.024 Regeln aktiv', 'Aktualisiert'])],
+      ['Transportverschlüsselung prüfen', 'Zertifikate und Schlüssel validieren', fake(['Handshake', 'Schlüsseltausch 4096 bit', 'Gültig'])],
+      ['WLAN-Analyse', 'Feldstärke und Kanalbelegung messen', fake(['Messe Feldstärke', 'Prüfe Kanäle', 'Empfang gut'])],
+      ['DNS-Auflösung prüfen', 'Namensserver testen', fake(['Prüfe Namensserver', 'Antwort ok'])],
+      ['Funkmodule neu initialisieren', 'WLAN und Bluetooth zurücksetzen', fake(['Setze Module zurück', 'Initialisiere', 'Bereit'])],
     ] },
-    { k: 'LGI', n: 'Luigi · KI-Kern', c: '#C38BFF', items: [
-      ['Neuronales Netz nachtrainieren', 'Bewegungsmuster optimieren', fake(['Lade 57 Verhaltensmuster', 'Epoche 1/3', 'Epoche 2/3', 'Epoche 3/3', 'Verlust 0,0012'])],
-      ['Persönlichkeitskern sichern', 'Snapshot von Luigi anlegen', fake(['Serialisiere Kern', 'Schreibe Snapshot #7', 'Gesichert'])],
-      ['Bewegungs-KI zurücksetzen', 'Luigi an den Rand holen', () => { try { if (typeof buddyHome === 'function') buddyHome(true); } catch (e) {} return fakeRun(['Sende Rückruf-Signal', 'Luigi angedockt']); }],
+    { k: 'LGI', n: 'Assistent', c: '#C38BFF', items: [
+      ['Verhaltensmodell aktualisieren', 'Bewegungsabläufe neu berechnen', fake(['Lade 57 Verhaltensmuster', 'Epoche 1/3', 'Epoche 2/3', 'Epoche 3/3', 'Verlust 0,0012'])],
+      ['Assistent-Profil sichern', 'Einstellungen von Luigi sichern', fake(['Lese Einstellungen', 'Schreibe Sicherung', 'Gesichert'])],
+      ['Assistent zurückholen', 'Luigi an den Rand setzen', () => { try { if (typeof buddyHome === 'function') buddyHome(true); } catch (e) {} return fakeRun(['Sende Rückruf', 'Luigi ist am Rand']); }],
       ['Sprachmodul abgleichen', 'Stimme & Weckwort prüfen', fake(['Prüfe Weckwort „Hey Luigi“', 'Prüfe Sprachausgabe', 'Module bereit'])],
-      ['Traum-Modus', 'Luigi träumen lassen (Simulation)', fake(['Senke Aktivität', 'REM-Phase', 'Luigi ist erholt'])],
+      ['Ruhezustand des Assistenten', 'Aktivität vorübergehend senken', fake(['Senke Aktivität', 'Ruhezustand aktiv'])],
     ] },
     { k: 'SEC', n: 'Sicherheit', c: '#FF4D5E', items: [
-      ['Eindringlings-Scan', 'Alle Sektoren auf Fremdzugriff prüfen', fake(['Scanne Prozesse', 'Scanne Speicher', 'Scanne Ports', '0 Bedrohungen'])],
-      ['Verschlüsselung AES-4096', 'Datentresor neu verschlüsseln', fake(['Erzeuge Schlüssel', 'Verschlüssele Tresor', 'Tresor versiegelt'])],
-      ['Biometrie-Sperre', 'Status: nicht eingerichtet', fake(['Suche Sensor', 'E: Kein Sensor gefunden'], true)],
-      ['Zugriffsprotokoll', 'Letzte Anmeldungen anzeigen', fake(['Odin · Stufe 7 · jetzt', 'Mama · Stufe 1 · täglich', 'Luigi · Stufe 3 · immer'])],
-      ['Selbstzerstörung', 'Nur mit Odin-Freigabe', fake(['Prüfe Freigabe …', 'ZUGRIFF VERWEIGERT', 'Freigabe nur durch Odin'], true), 'warn'],
+      ['Integritätsprüfung', 'Systemdateien auf Veränderungen prüfen', fake(['Scanne Prozesse', 'Scanne Speicher', 'Scanne Ports', 'Keine Auffälligkeiten'])],
+      ['Datenspeicher verschlüsseln', 'Lokale Daten neu verschlüsseln', fake(['Erzeuge Schlüssel', 'Verschlüssele Daten', 'Verschlüsselt'])],
+      ['Biometrische Sperre', 'Status: nicht eingerichtet', fake(['Suche Sensor', 'E: Kein Sensor gefunden'], true)],
+      ['Zugriffsprotokoll', 'Letzte Anmeldungen anzeigen', fake(['Administrator · jetzt', 'Benutzer · täglich'])],
+      ['Werkseinstellungen', 'Alle Daten löschen · gesperrt', fake(['Prüfe Berechtigung …', 'Zugriff verweigert', 'Nur über den Wiederherstellungsmodus'], true), 'warn'],
     ] },
     { k: 'DGN', n: 'Diagnose', c: '#FFD24D', items: [
       ['Systembericht', 'Gerät, Versionen, Rechte', report],
-      ['Vollständige Diagnose', 'Alle Module testen', fake(['Kern ok', 'Speicher ok', 'Netz ok', 'Audio ok', 'Kamera ok', 'Luigi ok', 'System gesund'])],
-      ['Sensor-Telemetrie', 'Live-Messwerte einfrieren', fake(['Friere Puffer ein', 'Schreibe 512 Messpunkte', 'Telemetrie gesichert'])],
+      ['Vollständige Diagnose', 'Alle Module testen', fake(['Prozessor ok', 'Speicher ok', 'Netzwerk ok', 'Audio ok', 'Kamera ok', 'Assistent ok', 'Keine Fehler'])],
+      ['Telemetrie exportieren', 'Messwerte sichern', fake(['Lese Puffer', 'Schreibe 512 Messpunkte', 'Gesichert'])],
       ['Protokolle archivieren', 'Logbuch komprimieren', fake(['Packe 3 Logdateien', 'Archiv 41 KB', 'Archiviert'])],
     ] },
   ];
@@ -1870,7 +1869,7 @@ renderMsg(); renderRadio(); renderMats(); show('home');
   function uplink() {
     const t0 = Date.now();
     const p = fetch('https://ntfy.sh/v1/health', { cache: 'no-store' }).then((r) => r.ok).catch(() => false);
-    return { lines: ['Öffne Kanal zu ntfy.sh', 'Messe Laufzeit'], wait: p.then((ok) => ok ? ['Antwort in ' + (Date.now() - t0) + ' ms', 'Uplink stabil'] : ['E: Keine Antwort', 'Uplink gestört – Internet prüfen']), };
+    return { lines: ['Verbinde mit ntfy.sh', 'Messe Laufzeit'], wait: p.then((ok) => ok ? ['Antwort in ' + (Date.now() - t0) + ' ms', 'Verbindung gut'] : ['E: Keine Antwort', 'Internet prüfen']), };
   }
   function report() {
     const d = INFO || {};
@@ -1885,18 +1884,18 @@ renderMsg(); renderRadio(); renderMats(); show('home');
 
   /* ---------- Aufbau ---------- */
   const el = document.createElement('div'); el.id = 'adm'; el.className = 'hidden';
-  el.innerHTML = '<div class="aBoot"></div><div class="aUi"><div class="aTop"><div class="aBrand"><span class="aGlyph">◢◤</span><div><b>BASTELRAUM // SYSTEMKERN</b><i>Notfall-Administration · Zugriffsstufe 7 · nur autorisiertes Personal</i></div></div><div class="aStat"><span id="aClock">--:--:--</span><span class="aRec">● SITZUNG AKTIV</span></div></div>'
-    + '<div class="aBody"><nav class="aNav"></nav><main class="aMain"><div class="aHead"></div><div class="aGrid"></div></main><aside class="aSide"><div class="aGauges"></div><div class="aLogT">SYSTEMPROTOKOLL</div><div class="aLog"></div></aside></div>'
-    + '<div class="aFoot"><span>LAUTER/LEISER · AUSWÄHLEN</span><span>LAUTER HALTEN · AUSFÜHREN</span><span>ANTIPPEN · AUSFÜHREN</span><span class="aHex"></span></div></div>';
+  el.innerHTML = '<div class="aBoot"></div><div class="aUi"><div class="aTop"><div class="aBrand"><span class="aGlyph">◢◤</span><div><b>Systemverwaltung</b><i>Bastelraum OS · Wartung und Diagnose · nur für Administratoren</i></div></div><div class="aStat"><span id="aClock">--:--:--</span><span>Admin-Sitzung</span></div></div>'
+    + '<div class="aBody"><nav class="aNav"></nav><main class="aMain"><div class="aHead"></div><div class="aGrid"></div></main><aside class="aSide"><div class="aGauges"></div><div class="aLogT">Ereignisse</div><div class="aLog"></div></aside></div>'
+    + '<div class="aFoot"><span>Lauter / Leiser: auswählen</span><span>Lauter halten: ausführen</span><span>Zurück: schließen</span><span class="aHex"></span></div></div>';
   $('stage').appendChild(el);
   const nav = el.querySelector('.aNav'), grid = el.querySelector('.aGrid'), head = el.querySelector('.aHead'), logEl = el.querySelector('.aLog'), gauges = el.querySelector('.aGauges');
   CATS.forEach((c, i) => {
-    const b = document.createElement('button'); b.className = 'aCat'; b.style.setProperty('--c', c.c);
+    const b = document.createElement('button'); b.className = 'aCat'; 
     b.innerHTML = '<span class="k">' + c.k + '</span><span class="n">' + c.n + '</span><span class="cnt">' + String(c.items.length).padStart(2, '0') + '</span>';
     b.onclick = () => { A.cat = i; A.sel = 0; render(); tick(); };
     nav.appendChild(b);
   });
-  const G = [['CPU', '%'], ['RAM', '%'], ['TEMP', '°C'], ['UPLINK', 'ms']];
+  const G = [['Prozessor', '%'], ['Speicher', '%'], ['Temperatur', '°C'], ['Latenz', 'ms']];
   gauges.innerHTML = G.map((g) => '<div class="aG"><span>' + g[0] + '</span><b>--</b><i><u></u></i></div>').join('');
 
   function log(t, cls) {
@@ -1909,8 +1908,8 @@ renderMsg(); renderRadio(); renderMats(); show('home');
   function render() {
     const c = CATS[A.cat];
     [...nav.children].forEach((b, i) => b.classList.toggle('on', i === A.cat));
-    el.style.setProperty('--c', c.c);
-    head.innerHTML = '<span class="k">' + c.k + ' /</span> ' + c.n + '<em>' + c.items.length + ' Module</em>';
+    
+    head.innerHTML = '<span class="k">' + c.k + ' /</span> ' + c.n + '<em>' + c.items.length + ' Einträge</em>';
     grid.innerHTML = '';
     c.items.forEach((it, i) => {
       const b = document.createElement('button'); b.className = 'aIt' + (it[3] ? ' ' + it[3] : '') + (i === A.sel ? ' sel' : '');
@@ -1924,7 +1923,7 @@ renderMsg(); renderRadio(); renderMats(); show('home');
   async function run(i) {
     if (A.busy) return;
     const it = CATS[A.cat].items[i], b = grid.children[i];
-    if (it[3] === 'warn' && !b.classList.contains('arm')) { b.classList.add('arm'); b.querySelector('.st').textContent = 'NOCHMAL ZUM BESTÄTIGEN'; log('Warnung: ' + it[0] + ' – Bestätigung nötig', 'w'); try { sndTap(); } catch (e) {} setTimeout(() => { b.classList.remove('arm'); b.querySelector('.st').textContent = ''; }, 3500); return; }
+    if (it[3] === 'warn' && !b.classList.contains('arm')) { b.classList.add('arm'); b.querySelector('.st').textContent = 'Zum Bestätigen erneut tippen'; log('Warnung: ' + it[0] + ' – Bestätigung nötig', 'w'); try { sndTap(); } catch (e) {} setTimeout(() => { b.classList.remove('arm'); b.querySelector('.st').textContent = ''; }, 3500); return; }
     b.classList.remove('arm');
     log('> ' + it[0]); try { sndTap(); } catch (e) {}
     const r = it[2]();
@@ -1941,7 +1940,7 @@ renderMsg(); renderRadio(); renderMats(); show('home');
     }
     bar.style.width = '100%';
     const bad = r.fail || /^E:/.test(lines[lines.length - 1]);
-    b.classList.remove('run'); b.classList.add(bad ? 'bad' : 'done'); st.textContent = bad ? 'FEHLGESCHLAGEN' : 'ABGESCHLOSSEN ✓';
+    b.classList.remove('run'); b.classList.add(bad ? 'bad' : 'done'); st.textContent = bad ? 'Fehlgeschlagen' : 'Abgeschlossen';
     log(bad ? '  Vorgang abgebrochen' : '  Vorgang abgeschlossen', bad ? 'e' : 'ok');
     A.busy = false;
     setTimeout(() => { b.classList.remove('done', 'bad'); bar.style.width = '0'; st.textContent = ''; }, 4000);
@@ -1966,17 +1965,16 @@ renderMsg(); renderRadio(); renderMats(); show('home');
     const d = new Date(); $('aClock').textContent = [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
     gv = gv.map((v, i) => Math.max(i === 2 ? 30 : 5, Math.min(i === 3 ? 180 : 95, v + (Math.random() - .5) * (i === 3 ? 30 : 9))));
     [...gauges.children].forEach((g, i) => { g.querySelector('b').textContent = Math.round(gv[i]) + G[i][1]; g.querySelector('u').style.width = Math.min(100, gv[i] / (i === 3 ? 180 : 100) * 100) + '%'; });
-    el.querySelector('.aHex').textContent = '0x' + Math.floor(Math.random() * 0xFFFFFFFF).toString(16).toUpperCase().padStart(8, '0') + '  ·  SEKTOR ' + (A.cat + 1) + '.' + (A.sel + 1);
+    el.querySelector('.aHex').textContent = 'Build ' + APP_VERSION + (INFO ? ' · App ' + INFO.app : '');
     lastTouch = Date.now();
   }
-  const NOISE = ['Heartbeat ok', 'Watchdog zurückgesetzt', 'Prüfsumme Block 0x{h} ok', 'Sensor T{n}: stabil', 'Uplink-Keepalive', 'Cache-Treffer {n}{n} %', 'Luigi-Kern: Leerlauf', 'Speicherseite 0x{h} gesichert'];
+  const NOISE = ['Heartbeat ok', 'Watchdog zurückgesetzt', 'Prüfsumme Block 0x{h} ok', 'Sensor T{n}: stabil', 'Verbindung gehalten', 'Cache-Treffer {n}{n} %', 'Assistent: Leerlauf', 'Speicherseite 0x{h} gesichert'];
   function noise() { const t = NOISE[Math.floor(Math.random() * NOISE.length)].replace(/\{h\}/g, () => Math.floor(Math.random() * 65535).toString(16).toUpperCase()).replace(/\{n\}/g, () => Math.floor(Math.random() * 10)); log(t, 'dim'); }
 
   async function boot() {
     const bt = el.querySelector('.aBoot'); el.classList.add('booting'); bt.innerHTML = '';
-    const L = ['BASTELRAUM SYSTEMKERN v' + APP_VERSION + '  –  NOTFALL-ADMINISTRATION', 'Initialisiere Sicherheitsmodul ........ OK', 'Prüfe Zugriffsstufe ................... 7', 'Lade Kernel-Matrix .................... OK', 'Verbinde Uplink ....................... OK', 'Entsperre Konsole …'];
-    for (const l of L) { if (!A.open) return; const r = document.createElement('div'); r.textContent = l; bt.appendChild(r); await new Promise((z) => setTimeout(z, 150)); }
-    await new Promise((z) => setTimeout(z, 250));
+    const L = ['Systemdienste werden geladen …'];
+    for (const l of L) { if (!A.open) return; const r = document.createElement('div'); r.textContent = l; bt.appendChild(r); await new Promise((z) => setTimeout(z, 700)); }
     el.classList.remove('booting');
   }
   window.openAdmin = () => {
@@ -1985,7 +1983,7 @@ renderMsg(); renderRadio(); renderMats(); show('home');
     try { if (L && L.open) luigiClose(); } catch (e) {}
     if (typeof view === 'string' && view.startsWith('night')) show('home');
     el.classList.remove('hidden', 'out'); render(); tick(); logEl.innerHTML = '';
-    log('Sitzung geöffnet · Stufe 7', 'ok');
+    log('Sitzung gestartet', 'ok');
     A.t = [setInterval(tick, 1000), setInterval(noise, 2600)];
     try { if (window.BastelOS && BastelOS.setAdminOpen) BastelOS.setAdminOpen(true); } catch (e) {}
     boot();
