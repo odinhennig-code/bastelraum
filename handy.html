@@ -95,6 +95,7 @@ ol{margin:6px 0 0;padding-left:20px;line-height:1.55;font-size:15px}
     <div style="display:flex;flex-direction:column;gap:2px">
       <h1>Bastelraum</h1>
       <span class="muted" style="font-size:14px;display:flex;align-items:center;gap:7px"><span id="liveDot" class="dot"></span><span id="liveTxt">Verbinde …</span></span>
+      <span id="tabTxt" class="muted" style="font-size:13px"></span>
     </div>
     <button id="setBtn" class="gb icon" aria-label="Einstellungen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </header>
@@ -304,6 +305,22 @@ function listen() {
   es.onerror = () => setLive(false);
   es.onmessage = (e) => { try { handleIncoming(JSON.parse(e.data)); } catch (x) {} };
 }
+/* Tablet-Zustand (vom Herzschlag des Tablets) */
+let stEs = null, tabSeen = store.get('tabSeen', 0), tabState = store.get('tabState', null);
+function paintTab() {
+  const el = $('tabTxt'); if (!el) return;
+  if (!tabSeen) { el.textContent = ''; return; }
+  const mins = Math.round((Date.now() - tabSeen) / 60000), on = mins < 7, st = tabState || {};
+  el.textContent = 'Tablet ' + (on ? 'online' : 'zuletzt vor ' + (mins < 60 ? mins + ' Min' : Math.round(mins / 60) + ' Std')) + (st.locked ? ' · gesperrt' : '') + (st.radio ? ' · Radio läuft' : '') + (st.v ? ' · ' + st.v : '');
+}
+function listenStatus() {
+  if (stEs) stEs.close();
+  const t = 'bastelraum-' + key.toLowerCase() + '-status';
+  stEs = new EventSource(NTFY + t + '/sse');
+  stEs.onmessage = (e) => { try { const m = JSON.parse(e.data); if (m.event !== 'message') return; const j = JSON.parse(m.message); if (j.state) { tabSeen = Date.now(); tabState = j.state; store.set('tabSeen', tabSeen); store.set('tabState', tabState); paintTab(); } } catch (x) {} };
+  fetch(NTFY + t + '/json?poll=1&since=15m').then((r) => r.text()).then((tx) => { tx.split('\n').filter(Boolean).forEach((l) => { try { const m = JSON.parse(l); const j = JSON.parse(m.message); if (j.state && m.time * 1000 > tabSeen) { tabSeen = m.time * 1000; tabState = j.state; } } catch (x) {} }); paintTab(); }).catch(() => {});
+}
+setInterval(paintTab, 30000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && key) { loadHistory(); if (!es || es.readyState === 2) listen(); } });
 
 /* ---------- Einstellungen ---------- */
@@ -319,7 +336,7 @@ $('unpair').onclick = () => { if (es) es.close(); key = null; store.set('key', n
 
 /* ---------- Start ---------- */
 function start() {
-  show('vMain'); renderLog(); loadHistory(); listen();
+  show('vMain'); renderLog(); loadHistory(); listen(); try { listenStatus(); paintTab(); } catch (e) {}
 }
 const fromLink = (location.hash.match(/k=([A-Za-z0-9]+)/) || [])[1];
 key = store.get('key', null);
