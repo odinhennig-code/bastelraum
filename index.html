@@ -88,6 +88,8 @@ html.lite .fade{animation-duration:.3s}
 .lman{display:none;overflow:visible}
 #luigi[data-shape=walker] .lman{display:block}
 #luigi.flip .lman{transform:scaleX(-1)}
+#luigi[data-shape=walker]{width:36px;height:48px}
+.lsprite{position:absolute;left:-57px;top:-87px;width:150px;height:140px;pointer-events:none}
 .lman .lleg,.lman .larm{transform-box:fill-box;transform-origin:50% 8%}
 .lman .lbody{transform-box:fill-box;transform-origin:50% 100%;animation:lbreathe 3s ease-in-out infinite}
 @keyframes lbreathe{50%{transform:scale(1.03,.97)}}
@@ -96,7 +98,6 @@ html.lite .fade{animation-duration:.3s}
 #luigi.walking .lleg.b{animation:lleg .34s ease-in-out infinite alternate-reverse}
 #luigi.walking .larm.a{animation:lleg .34s ease-in-out infinite alternate-reverse}
 #luigi.walking .larm.b{animation:lleg .34s ease-in-out infinite alternate}
-#luigi.walking .lman{animation:lstep .17s ease-in-out infinite alternate}
 @keyframes lleg{from{transform:rotate(24deg)}to{transform:rotate(-24deg)}}
 @keyframes lstep{to{translate:0 -2px}}
 #luigi.sit .lleg{transform:rotate(-75deg)}
@@ -326,9 +327,9 @@ input.field::placeholder{color:rgba(255,255,255,.5)}
   <!-- ================= LUIGI ================= -->
   <div id="lShade" class="hidden"></div>
   <div id="lGlow"></div>
-  <button id="luigi" data-shape="edge" aria-label="Luigi – Sprachassistent"><span class="lfx"><span class="lhandle"><span class="leyes"><i></i><i></i></span></span><svg class="lman" width="36" height="48" viewBox="0 0 40 54" aria-hidden="true"><defs><linearGradient id="lmg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC56B"/><stop offset=".35" stop-color="#FF6FA8"/><stop offset=".7" stop-color="#8B6CFF"/><stop offset="1" stop-color="#4FA3FF"/></linearGradient><radialGradient id="lms" cx=".35" cy=".25" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><rect class="lleg a" x="12.5" y="38" width="5.5" height="13" rx="2.75" fill="#7C83FF"/><rect class="lleg b" x="22" y="38" width="5.5" height="13" rx="2.75" fill="#5B8DFF"/><rect class="larm a" x="2" y="22" width="5" height="12" rx="2.5" fill="#FF8FB8"/><rect class="larm b" x="33" y="22" width="5" height="12" rx="2.5" fill="#9C7BFF"/><g class="lbody"><ellipse cx="20" cy="24" rx="15.5" ry="16.5" fill="url(#lmg)"/><ellipse cx="20" cy="24" rx="15.5" ry="16.5" fill="url(#lms)"/><ellipse class="leye" cx="15" cy="22" rx="2.4" ry="3.3" fill="#fff"/><ellipse class="leye" cx="25" cy="22" rx="2.4" ry="3.3" fill="#fff"/><circle cx="15.6" cy="22.8" r="1.2" fill="#2A1B4A"/><circle cx="25.6" cy="22.8" r="1.2" fill="#2A1B4A"/><ellipse cx="11.5" cy="28" rx="2.2" ry="1.3" fill="#FF5FA2" opacity=".55"/><ellipse cx="28.5" cy="28" rx="2.2" ry="1.3" fill="#FF5FA2" opacity=".55"/><path d="M17.5 29.5q2.5 2 5 0" stroke="#2A1B4A" stroke-width="1.3" fill="none" stroke-linecap="round"/></g></svg></span></button>
+  <button id="luigi" data-shape="edge" aria-label="Luigi – Sprachassistent"><span class="lfx"><span class="lhandle"><span class="leyes"><i></i><i></i></span></span><canvas class="lman lsprite" width="300" height="280"></canvas></span></button>
   <div id="lPanel" class="glass" aria-live="polite">
-    <div class="lhead"><span class="ldots"><i></i><i></i><i></i><i></i></span><span>Luigi</span></div>
+    <div class="lhead"><canvas id="lMini" width="120" height="120" style="width:60px;height:60px;margin:-14px -6px -10px -10px"></canvas><span class="ldots"><i></i><i></i><i></i><i></i></span><span>Luigi</span></div>
     <span id="lHeard"></span>
     <div id="lSay" class="hidden"></div>
   </div>
@@ -986,7 +987,7 @@ function stageRect(el) {
   const st = $('stage').getBoundingClientRect(), sc = st.width / 1280, r = el.getBoundingClientRect();
   return { x: (r.left - st.left) / sc, y: (r.top - st.top) / sc, w: r.width / sc, h: r.height / sc };
 }
-function shape(n) { lbtn.dataset.shape = n; lbtn.classList.remove('walking', 'sit', 'flip'); }
+function shape(n) { if (n !== 'walker') B.mood = null; lbtn.dataset.shape = n; lbtn.classList.remove('walking', 'sit', 'flip'); }
 function moveTo(x, y, ms, ease) {
   lbtn.style.transition = 'transform ' + ms + 'ms ' + (ease || 'cubic-bezier(.45,.05,.3,1)') + ',opacity .3s';
   lbtn.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px)';
@@ -1055,12 +1056,71 @@ function buddyHome(fast) {
 }
 const alive = (g) => g === B.gen && !L.open && view === 'home';
 
+const APP_VERSION_SPR = '2';
 /* =========================================================
    LUIGIS WELT
    Er bewegt sich nur auf freien Wegen um die Kacheln herum:
    linker Rand, Streifen unter der Kopfzeile, rechter Rand, Boden.
    ========================================================= */
 const RING = { x0: 14, x1: 1250, y0: 111, y1: 778 };
+
+/* ---------- Luigi-Sprites (Einzelbilder aus luigi.webp) ---------- */
+const SPR = { img: new Image(), meta: null, ready: false };
+SPR.img.src = 'luigi.webp?v=' + APP_VERSION_SPR;
+fetch('luigi.json?v=' + APP_VERSION_SPR).then((r) => r.json()).then((m) => { SPR.meta = m; SPR.ready = SPR.img.complete; }).catch(() => {});
+SPR.img.onload = () => { SPR.ready = !!SPR.meta; };
+const ANIM_FPS = { walk: 11, run: 16, jump: 12, wave: 8, idle: 5, talk: 9, think: 6, cheer: 10, sleep: 4, portal: 13, peek: 8, dance: 10 };
+class SpriteView {
+  constructor(canvas, ax, ay, scale) { this.c = canvas; this.x = canvas.getContext('2d'); this.ax = ax; this.ay = ay; this.scale = scale; this.anim = 'idle'; this.t0 = performance.now(); this.once = null; this.pose = null; this.last = ''; }
+  play(name, once) { if (this.anim === name && !once) return; this.anim = name; this.pose = null; this.t0 = performance.now(); this.once = once ? name : null; }
+  hold(pose) { this.pose = pose; }
+  frame(now) {
+    if (!SPR.ready) return;
+    let rec;
+    if (this.pose && SPR.meta.pose[this.pose]) rec = SPR.meta.pose[this.pose];
+    else {
+      const fr = SPR.meta.anim[this.anim] || SPR.meta.anim.idle;
+      let i = Math.max(0, Math.floor((now - this.t0) / 1000 * (ANIM_FPS[this.anim] || 8)));
+      if (this.once) { if (i >= fr.length) { i = fr.length - 1; if (this.onDone) { const f = this.onDone; this.onDone = null; f(); } } }
+      else if (this.anim === 'sleep') i = i < fr.length ? i : 3 + (i % 3);
+      else i = i % fr.length;
+      rec = fr[i];
+    }
+    const key = rec.join(',') + this.scale;
+    if (key === this.last) return; this.last = key;
+    const [sx, sy, w, h, ax, ay] = rec, k = this.scale;
+    this.x.clearRect(0, 0, this.c.width, this.c.height);
+    this.x.drawImage(SPR.img, sx, sy, w, h, this.ax - ax * k, this.ay - ay * k, w * k, h * k);
+  }
+}
+const bigSprite = new SpriteView(document.querySelector('#luigi .lsprite'), 150, 270, 1.1);
+const miniSprite = new SpriteView($('lMini'), 60, 114, .78);
+B.mood = null;   // vom Verhalten gesetzte Animation/Pose
+function spriteTick(now) {
+  try {
+  if (lbtn.dataset.shape === 'walker') {
+    const cl = lbtn.classList;
+    bigSprite.scale = B.y < 200 ? .62 : 1.35;
+    if (B.mood && B.mood.pose) bigSprite.hold(B.mood.pose);
+    else if (B.mood && B.mood.anim) { bigSprite.pose = null; bigSprite.play(B.mood.anim, B.mood.once); }
+    else if (cl.contains('sleep')) bigSprite.play('sleep');
+    else if (cl.contains('sit')) bigSprite.hold('sitdangle');
+    else if (cl.contains('wave')) { bigSprite.pose = null; bigSprite.play('wave'); }
+    else if (cl.contains('walking')) { bigSprite.pose = null; bigSprite.play(cl.contains('run') ? 'run' : 'walk'); }
+    else { bigSprite.pose = null; bigSprite.play('idle'); }
+    bigSprite.frame(now);
+  }
+  if (L.open) {
+    const pc = $('lPanel').classList;
+    miniSprite.play(pc.contains('listen') ? 'idle' : pc.contains('think') ? 'think' : 'talk');
+    miniSprite.frame(now);
+  }
+  } catch (e) {}
+  requestAnimationFrame(spriteTick);
+}
+requestAnimationFrame(spriteTick);
+function mood(m, ms) { B.mood = m; if (ms) setTimeout(() => { if (B.mood === m) B.mood = null; }, ms); }
+
 const fx = document.querySelector('#luigi .lfx');
 function ringParam(x, y) {                 // Punkt -> Position auf dem Rundweg (im Uhrzeigersinn ab oben links)
   const W = RING.x1 - RING.x0, H = RING.y1 - RING.y0;
@@ -1126,6 +1186,7 @@ function puff(text, color, dx) {
 async function puffs(g, text, color, n, gap) { for (let i = 0; i < n; i++) { puff(text, color); await wait(gap || 500); if (!alive(g)) return false; } return true; }
 async function hop(g, dx, h) {
   const x = B.x, y = B.y;
+  if (lbtn.dataset.shape === 'walker') { B.mood = { anim: 'jump', once: true }; bigSprite.play('jump', true); setTimeout(() => { if (B.mood && B.mood.anim === 'jump') B.mood = null; }, 560); }
   return (await glide([[x + dx / 2, y - (h || 26)], [x + dx, y]], 160 + Math.abs(dx), { noSquash: true })) && alive(g);
 }
 async function walk(g, x, speed, cls) {
@@ -1145,13 +1206,12 @@ async function sleepFor(g, ms) {
   lbtn.classList.remove('sit', 'sleep'); return ok;
 }
 async function dance(g, ms) {
-  shape('walker'); const end = Date.now() + ms;
+  shape('walker'); B.mood = { anim: 'dance' }; const end = Date.now() + ms;
   while (Date.now() < end) {
-    lbtn.classList.toggle('flip'); puff('♪', ['#FFC56B', '#FF6FA8', '#8B6CFF', '#4FA3FF'][Math.floor(rnd(0, 4))]);
-    if (!await hop(g, 0, rnd(8, 18))) return false;
-    if (Math.random() < .25 && !await spin(g)) return false;
+    if (Math.random() < .3) lbtn.classList.toggle('flip');
+    await wait(rnd(600, 1000)); if (!alive(g)) return false;
   }
-  return alive(g);
+  B.mood = null; return alive(g);
 }
 async function lineUnder(g, el) {
   const r = stageRect(el);
@@ -1191,10 +1251,28 @@ const SPOT = {
   top: () => [rnd(60, 1200), 6],
 };
 const xy = (p) => p;
-async function walkerAt(g, p) { if (!await goTo(g, p[0], p[1])) return false; shape('walker'); return true; }
+async function showPose(g, pose, ms) { B.mood = { pose }; const ok = await linger(g, ms); B.mood = null; return ok; }
+async function showAnim(g, anim, ms) { B.mood = { anim }; const ok = await linger(g, ms); B.mood = null; return ok; }
+async function walkerAt(g, p) { if (!await goTo(g, p[0], p[1])) return false; shape('walker'); B.mood = { anim: 'portal', once: true }; bigSprite.play('portal', true); await wait(520); B.mood = null; if (!alive(g)) return false; return true; }
 
 /* Mehr als 50 Sachen, die Luigi macht */
 const ACTS = [
+  ['Malen', 2, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await showPose(g, 'paint', 3500); }],
+  ['Kleben', 2, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await showPose(g, 'glue', 3000); await showPose(g, 'thumb', 1500); }],
+  ['Am Laptop', 2, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await showPose(g, 'laptop', 5000); }],
+  ['Daumen hoch', 2, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await showPose(g, 'thumb', 2500); }],
+  ['Jubeln', 2, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await showAnim(g, 'cheer', 3000); }],
+  ['Kichern', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await showPose(g, 'giggle', 2500); }],
+  ['Sternchen-Augen', 1, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await showPose(g, 'stars', 2500); }],
+  ['Schüchtern', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await showPose(g, 'shy', 2500); }],
+  ['Schmollen und vertragen', 1, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; if (!await showPose(g, 'pout', 2200)) return; await showPose(g, 'laugh', 1800); }],
+  ['Kurz traurig', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; if (!await showPose(g, 'cry', 2000)) return; await showAnim(g, 'cheer', 1800); }],
+  ['Verbeugen', 1, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await showPose(g, 'bow', 2200); }],
+  ['Schulterzucken', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await showPose(g, 'shrug', 2200); }],
+  ['Auf dem Bauch liegen', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await showPose(g, 'lie', 4500); }],
+  ['Erschrecken', 1, async (g) => { if (!await walkerAt(g, [1200, 744])) return; if (!await showPose(g, 'shock', 1000)) return; await walk(g, 860, 180, 'run'); }],
+  ['Sprechblase', 1, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await showPose(g, 'bubble', 3000); }],
+  ['Singen', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await showAnim(g, 'talk', 3500); }, () => playing ? 4 : 1],
   // --- Boden links ---
   ['Spaziergang links', 3, async (g) => { const p = SPOT.floorL(); if (!await walkerAt(g, p)) return; await walk(g, rnd(60, 430)); await linger(g, 1500); }],
   ['Winken links', 2, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await wave(g, 2200); }],
@@ -1204,11 +1282,11 @@ const ACTS = [
   ['Glühwürmchen jagen', 2, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await chaseFirefly(g); }],
   ['Nickerchen links', 2, async (g) => { if (!await walkerAt(g, [70, 744])) return; await sleepFor(g, rnd(6000, 9000)); puff('!', '#FFC56B'); await hop(g, 0, 20); }],
   ['Sitzen links', 2, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await sitFor(g, rnd(4000, 6000)); }],
-  ['Pirouette', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; for (let i = 0; i < 3; i++) if (!await spin(g)) return; puff('✦', '#FFE08A'); }],
-  ['Stolpern', 1, async (g) => { if (!await walkerAt(g, [90, 744])) return; await walk(g, 260, 90, 'run'); fx.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(80deg)' }, { transform: 'rotate(80deg)' }, { transform: 'rotate(0)' }], { duration: 1600, easing: 'ease-in-out' }); puff('!', '#FFC56B'); await linger(g, 1800); }],
-  ['Niesen', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await linger(g, 700); fx.animate([{ transform: 'scale(1)' }, { transform: 'scale(.9,1.1)' }, { transform: 'scale(1.2,.8)' }, { transform: 'scale(1)' }], { duration: 600 }); puff('Hatschi!', '#fff', 20); await linger(g, 1200); }],
-  ['Nachdenken', 2, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await puffs(g, '?', '#8BC1FF', 3, 700); await linger(g, 1200); puff('!', '#FFC56B'); }],
-  ['Gähnen', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; fx.animate([{ transform: 'scale(1)' }, { transform: 'scale(.92,1.12)' }, { transform: 'scale(1)' }], { duration: 1400 }); puff('…', '#ccc'); await linger(g, 2000); }],
+  ['Pirouette', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await showAnim(g, 'dance', 3000); await showPose(g, 'bow', 1500); }],
+  ['Stolpern', 1, async (g) => { if (!await walkerAt(g, [90, 744])) return; await walk(g, 260, 90, 'run'); if (!await showPose(g, 'lie', 1800)) return; await showPose(g, 'shy', 1500); }],
+  ['Niesen', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; if (!await showPose(g, 'shock', 900)) return; puff('Hatschi!', '#fff', 20); await showPose(g, 'giggle', 1500); }],
+  ['Nachdenken', 2, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; if (!await showAnim(g, 'think', 3500)) return; await showPose(g, 'point', 1500); }],
+  ['Gähnen', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; if (!await showPose(g, 'yawn', 2200)) return; await showPose(g, 'tired', 2000); }],
   ['Hin und her laufen', 2, async (g) => { if (!await walkerAt(g, [100, 744])) return; for (let i = 0; i < 3; i++) { if (!await walk(g, 380)) return; if (!await walk(g, 100)) return; } }],
   // --- Boden rechts ---
   ['Spaziergang rechts', 3, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await walk(g, rnd(850, 1215)); await linger(g, 1500); }],
@@ -1217,7 +1295,7 @@ const ACTS = [
   ['Nickerchen rechts', 2, async (g) => { if (!await walkerAt(g, [1200, 744])) return; await sleepFor(g, rnd(6000, 9000)); }],
   ['Sitzen rechts', 2, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await sitFor(g, rnd(4000, 6000)); }],
   ['Hüpfen rechts', 2, async (g) => { if (!await walkerAt(g, [1200, 744])) return; for (let i = 0; i < 5; i++) if (!await hop(g, -60, 28)) return; }],
-  ['Herz schicken', 2, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await puffs(g, '♥', '#FF6FA8', 4, 450); await wave(g, 1200); }],
+  ['Herz schicken', 2, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; if (!await showPose(g, 'hearts', 2600)) return; await wave(g, 1200); }],
   ['Glühwürmchen rechts', 1, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; puff('✦', '#FFE08A'); await hop(g, 0, 30); await walk(g, rnd(850, 1215), 150, 'run'); puff('✦', '#FFE08A'); }],
   // --- Knopfleiste (als kleine Kugel im Spalt darüber) ---
   ['Über die Leiste rollen', 3, async (g) => { const r = SPOT.dockRect(), y = r.y - 20; if (!await goTo(g, r.x - 24, 778)) return; if (!await glide([[r.x - 6, y], [r.x + 10, y]], 160)) return; fx.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(720deg)' }], { duration: 2600 }); await glide([[r.x + r.w - 30, y]], 120, { linear: true }); await linger(g, 1000); }],
@@ -1229,12 +1307,12 @@ const ACTS = [
   ['Auf der Uhr sitzen', 3, async (g) => { if (!await walkerAt(g, SPOT.clock())) return; await sitFor(g, rnd(4500, 7000)); }],
   ['Über die Uhr laufen', 2, async (g) => { const r = SPOT.clockRect(); if (!await walkerAt(g, [r.x, r.y - 44])) return; await walk(g, r.x + r.w - 36); await linger(g, 1500); }],
   ['Auf der Uhr schlafen', 1, async (g) => { if (!await walkerAt(g, SPOT.clock())) return; await sleepFor(g, rnd(6000, 9000)); }],
-  ['Uhr anschauen', 2, async (g) => { if (!await walkerAt(g, SPOT.clock())) return; await puffs(g, 'tick tack', '#FFC56B', 1); await linger(g, 2500); }],
+  ['Uhr anschauen', 2, async (g) => { if (!await walkerAt(g, SPOT.clock())) return; await showAnim(g, 'think', 3000); }],
   ['Strich unter der Uhr', 1, async (g) => { await lineUnder(g, $('clkH').parentElement); }],
   // --- Begrüßung ---
   ['Auf „Hallo Mama“ sitzen', 3, async (g) => { const r = SPOT.greet(); if (!await walkerAt(g, [r.x + rnd(10, r.w - 40), r.y - 44])) return; await sitFor(g, rnd(4000, 6000)); }],
   ['Über „Hallo Mama“ laufen', 2, async (g) => { const r = SPOT.greet(); if (!await walkerAt(g, [r.x, r.y - 44])) return; await walk(g, r.x + r.w - 36); await wave(g, 1500); }],
-  ['Mama grüßen', 3, async (g) => { const r = SPOT.greet(); if (!await walkerAt(g, [r.x + r.w + 16, r.y + 2])) return; await puffs(g, '♥', '#FF6FA8', 3, 400); await wave(g, 2000); }],
+  ['Mama grüßen', 3, async (g) => { const r = SPOT.greet(); if (!await walkerAt(g, [r.x + r.w + 16, r.y + 2])) return; if (!await wave(g, 2000)) return; await showPose(g, 'hearts', 1800); }],
   ['Strich unter „Hallo Mama“', 2, async (g) => { await lineUnder(g, SPOT.greet().el || document.querySelector('header span[style*="34px"]')); }],
   ['Strich unter dem Datum', 2, async (g) => { await lineUnder(g, $('date')); }],
   ['Kopfzeile erkunden', 2, async (g) => { if (!await walkerAt(g, SPOT.head())) return; await walk(g, SPOT.head()[0]); await linger(g, 1800); }],
@@ -1245,7 +1323,7 @@ const ACTS = [
   ['Oben entlangflitzen', 1, async (g) => { if (!await goTo(g, 14, 118)) return; await glide([[60, 6], [1220, 6], [1250, 118]], 520); }],
   ['Links reingucken', 2, async (g) => { if (!await goTo(g, 14, rnd(200, 600))) return; await glide([[-12, B.y]], 90); await linger(g, 2500); puff('?', '#8BC1FF'); }],
   ['Rechts reingucken', 2, async (g) => { if (!await goTo(g, 1250, rnd(200, 600))) return; await glide([[1266, B.y]], 90); await linger(g, 2500); }],
-  ['Von unten gucken', 1, async (g) => { if (!await goTo(g, rnd(60, 430), 778)) return; await glide([[B.x, 790]], 60); await linger(g, 2500); }],
+  ['Von unten gucken', 1, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; await showAnim(g, 'peek', 3000); }],
   ['Rechten Rand hochklettern', 2, async (g) => { if (!await goTo(g, 1250, 760)) return; await glide([[1252, 140]], 90, { linear: true }); puff('✦', '#FFE08A'); }],
   ['Linken Rand runterrutschen', 1, async (g) => { if (!await goTo(g, 14, 130)) return; await glide([[14, 760]], 520); puff('Wiii!', '#fff'); }],
   ['Sternschnuppe', 1, async (g) => { if (!await goTo(g, 14, 118)) return; for (let i = 0; i < 6; i++) { puff('✦', '#FFE08A', -20); await wait(90); } await glide([[1250, 118]], 900); }],
@@ -1255,9 +1333,9 @@ const ACTS = [
   ['Zur Musik tanzen', 0, async (g) => { if (!await walkerAt(g, Math.random() < .5 ? SPOT.floorL() : SPOT.floorR())) return; await dance(g, rnd(5000, 8000)); }, () => playing ? 8 : 0],
   ['Musik-Noten', 0, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; await puffs(g, '♫', '#8B6CFF', 5, 500); await dance(g, 2500); }, () => playing ? 4 : 0],
   ['Timer beobachten', 0, async (g) => { if (!await walkerAt(g, SPOT.clock())) return; await puffs(g, 'tick tack', '#FFC56B', 2, 800); await sitFor(g, 3000); }, () => timers.length ? 3 : 0],
-  ['Morgendehnen', 0, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; fx.animate([{ transform: 'scale(1)' }, { transform: 'scale(.85,1.25)' }, { transform: 'scale(1)' }], { duration: 1600, easing: 'ease-in-out' }); puff('Guten Morgen!', '#FFC56B', 20); await wave(g, 1500); }, () => { const h = new Date().getHours(); return h >= 6 && h < 11 ? 4 : 0; }],
+  ['Morgendehnen', 0, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; if (!await showPose(g, 'yawn', 1600)) return; puff('Guten Morgen!', '#FFC56B', 20); await showAnim(g, 'cheer', 2000); }, () => { const h = new Date().getHours(); return h >= 6 && h < 11 ? 4 : 0; }],
   ['Abends müde', 0, async (g) => { if (!await walkerAt(g, SPOT.floorR())) return; puff('…', '#ccc'); await sleepFor(g, rnd(8000, 12000)); }, () => { const h = new Date().getHours(); return h >= 20 || h < 6 ? 6 : 0; }],
-  ['Kaffeepause', 0, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; puff('Pause!', '#C9A27A', 20); await sitFor(g, 4000); }, () => { const h = new Date().getHours(); return h >= 14 && h < 17 ? 2 : 0; }],
+  ['Kaffeepause', 0, async (g) => { if (!await walkerAt(g, SPOT.floorL())) return; puff('Pause!', '#C9A27A', 20); await showPose(g, 'laptop', 4000); }, () => { const h = new Date().getHours(); return h >= 14 && h < 17 ? 2 : 0; }],
 ];
 function pickAct() {
   const list = ACTS.map((a) => [a, a[3] ? a[3]() : a[1]]).filter((x) => x[1] > 0);
@@ -1450,7 +1528,7 @@ setInterval(() => {
 /* =========================================================
    LIVE-UPDATES: neue Version auf GitHub -> automatisch neu laden
    ========================================================= */
-const APP_VERSION = '2.0.1';
+const APP_VERSION = '2.1.0';
 let updating = false;
 async function checkUpdate() {
   if (updating) return;
